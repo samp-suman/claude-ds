@@ -26,7 +26,7 @@ python ingest.py \
 
 ---
 
-## profile.py — Dataset Profiler
+## data_profiler.py — Dataset Profiler
 
 Computes per-column stats and detects problem type.
 

@@ -55,3 +55,6 @@ desktop.ini
 .env
 *.json.bak
 kaggle.json
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json

@@ -81,3 +81,18 @@ Format: [Semantic Versioning](https://semver.org/) — `## [version] YYYY-MM-DD`
 - Parallel execution via Claude Code's native `Agent` tool (not threads/processes)
 - Memory persists in generated project folder (JSON + Markdown, no external DB)
 - CLAUDE.md written into every generated project for auto-activation on next session
+
+## [0.1.1] 2026-04-04 — Bug fixes from Titanic test
+
+### Fixed
+- `validate.py`: Replaced UTF-8 icons (✓ ⚠ ✗) with ASCII tags ([OK] [WARN] [STOP]) to fix Windows cp1252 encoding error on console output
+- `profile.py` → renamed to `data_profiler.py`: Was shadowing Python's stdlib `profile` module when scripts directory was on sys.path, causing SHAP `LinearExplainer` to fail with `module 'profile' has no attribute 'run'`
+- `SKILL.md`: Updated Step 4 profile command to use `data_profiler.py`
+- `scripts/README.md`: Updated script name reference
+
+### Tested
+- Full pipeline verified on Titanic dataset (891 rows, 12 columns, binary classification)
+- Parallel training: LightGBM, XGBoost, RandomForest, Logistic — all 4 simultaneously
+- Leaderboard: Logistic Regression ranked 1st (ROC-AUC: 0.8511)
+- SHAP: Top feature = Sex (SHAP=1.16) — correct for Titanic domain
+- All 27 artifacts generated: EDA plots, model .pkl files, confusion matrix, ROC curve, SHAP charts, pairplot, final_report.html (569KB)

@@ -274,7 +274,7 @@ def main():
     print(f"DataForge Validation Report")
     print(f"{'='*50}")
     for check in checks:
-        icon = "✓" if check["status"] == "PASS" else ("⚠" if check["status"] == "WARNING" else "✗")
+        icon = "[OK]" if check["status"] == "PASS" else ("[WARN]" if check["status"] == "WARNING" else "[STOP]")
         print(f"  {icon} {check['name']}: {check['message']}")
     print(f"{'='*50}")
     print(f"Result: {overall_status} (exit code: {exit_code})")

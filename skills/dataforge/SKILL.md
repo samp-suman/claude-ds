@@ -99,7 +99,7 @@ If `"exit_code": 1` (warnings): report warnings to user, then continue.
 ### Step 4 — Profile
 
 ```bash
-python3 ~/.claude/skills/dataforge/scripts/profile.py \
+python3 ~/.claude/skills/dataforge/scripts/data_profiler.py \
   --data "{OUTPUT_DIR}/data/raw/{filename}" \
   --output "{OUTPUT_DIR}/data/interim/profile.json"
 ```
