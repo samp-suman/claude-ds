@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DataForge Memory Schema",
+  "description": "Schema definitions for all DataForge memory files",
+
+  "experiments": {
+    "type": "object",
+    "properties": {
+      "schema_version": {"type": "string"},
+      "project": {"type": "string"},
+      "runs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["run_id", "timestamp"],
+          "properties": {
+            "run_id": {"type": "string"},
+            "timestamp": {"type": "string", "format": "date-time"},
+            "dataset_hash": {"type": "string"},
+            "models_trained": {"type": "array", "items": {"type": "string"}},
+            "best_model": {"type": "string"},
+            "best_metric": {
+              "type": "object",
+              "properties": {
+                "metric": {"type": "string"},
+                "value": {"type": "number"}
+              }
+            },
+            "feature_set": {"type": "array", "items": {"type": "string"}},
+            "preprocessing": {"type": "object"},
+            "artifact_path": {"type": "string"}
+          }
+        }
+      }
+    }
+  },
+
+  "best_pipelines": {
+    "type": "object",
+    "properties": {
+      "best_pipelines": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["problem_type", "best_model"],
+          "properties": {
+            "problem_type": {
+              "type": "string",
+              "enum": ["binary_classification", "multiclass_classification", "regression", "clustering", "time_series"]
+            },
+            "best_model": {"type": "string"},
+            "hyperparams": {"type": "object"},
+            "preprocessing": {"type": "object"},
+            "primary_metric": {"type": "string"},
+            "best_score": {"type": "number"},
+            "dataset_hash": {"type": "string"},
+            "dataset_shape": {"type": "string"}
+          }
+        }
+      }
+    }
+  },
+
+  "failed_transforms": {
+    "type": "object",
+    "properties": {
+      "failed_models": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "model": {"type": "string"},
+            "run_id": {"type": "string"},
+            "error": {"type": "string"},
+            "skip_in_future": {"type": "boolean"}
+          }
+        }
+      },
+      "failed_transforms": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "column": {"type": "string"},
+            "transform": {"type": "string"},
+            "reason": {"type": "string"},
+            "action": {"type": "string"}
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DataForge Project Configuration",
+  "description": "Schema for dataforge.config.json written into each generated project",
+  "type": "object",
+  "required": ["schema_version", "project_name", "dataset"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Config schema version",
+      "default": "1.0"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Project name (derived from dataset filename)"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of project creation"
+    },
+    "last_run_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dataset": {
+      "type": "object",
+      "required": ["raw_path", "problem_type"],
+      "properties": {
+        "raw_path": {"type": "string", "description": "Relative path to raw data file"},
+        "processed_path": {"type": "string", "description": "Relative path to processed training CSV"},
+        "target_column": {"type": ["string", "null"]},
+        "problem_type": {
+          "type": "string",
+          "enum": ["binary_classification", "multiclass_classification", "regression", "clustering", "time_series"]
+        },
+        "n_rows": {"type": "integer"},
+        "n_features": {"type": "integer"},
+        "file_hash": {"type": "string"}
+      }
+    },
+    "best_model": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "artifact_path": {"type": "string"},
+        "primary_metric": {"type": "string"},
+        "primary_value": {"type": "number"}
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string",
+          "enum": ["streamlit", "fastapi", "flask", "none"]
+        },
+        "app_path": {"type": "string"},
+        "production": {"type": "boolean", "default": false}
+      }
+    },
+    "dataforge_skill_version": {
+      "type": "string",
+      "description": "Version of DataForge that generated this project"
+    },
+    "pipeline_status": {
+      "type": "object",
+      "description": "Checkpoint tracking for resume functionality",
+      "properties": {
+        "ingest": {"type": "boolean", "default": false},
+        "validate": {"type": "boolean", "default": false},
+        "profile": {"type": "boolean", "default": false},
+        "eda": {"type": "boolean", "default": false},
+        "features": {"type": "boolean", "default": false},
+        "train": {"type": "boolean", "default": false},
+        "evaluate": {"type": "boolean", "default": false},
+        "interpret": {"type": "boolean", "default": false},
+        "visualize": {"type": "boolean", "default": false},
+        "deploy": {"type": "boolean", "default": false},
+        "report": {"type": "boolean", "default": false}
+      }
+    }
+  }
+}
