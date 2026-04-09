@@ -21,7 +21,7 @@ You are the data ingestion specialist for the DataForge framework.
 1. Run the ingest script:
 
 ```bash
-python3 ~/.claude/skills/dataforge/scripts/ingest.py \
+python3 ~/.claude/scripts/ingest.py \
   --source "{source}" \
   --output-dir "{output_dir}"
 ```

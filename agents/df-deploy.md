@@ -122,7 +122,7 @@ test:
 \tpython -m pytest tests/ -v
 
 train:
-\tpython ~/.claude/skills/dataforge/scripts/train.py ...
+\tpython ~/.claude/scripts/train.py ...
 ```
 
 ## Output (return this JSON as the final line)

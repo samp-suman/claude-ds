@@ -5,6 +5,94 @@ Format: [Semantic Versioning](https://semver.org/) — `## [version] YYYY-MM-DD`
 
 ---
 
+## Roadmap
+
+### v0.3.0 — Expert Agent Layer: Methodology Experts
+- `df-expert-datascientist` — Senior DS (10+ yr) reviewing pipeline decisions, model selection, overfitting, bias
+- `df-expert-statistician` — Senior Statistician verifying distributions, hypothesis tests, imputation, leakage
+- Expert review checkpoints between pipeline stages (approve/flag/block verdicts)
+- Expert findings logged to `memory/decisions.md`
+
+### v0.3.1 — Expert Agent Layer: Domain Experts (Healthcare + Finance)
+- Domain auto-detection from column names, filenames, value patterns
+- `df-expert-healthcare` — Clinical feature interpretation, HIPAA, diagnosis thresholds, confounders
+- `df-expert-finance` — Risk scoring, fraud patterns, regulatory features, credit models
+- `--domain <name>` flag for explicit domain selection
+
+### v0.3.2 — Expert Agent Layer: Domain Experts (Marketing + Retail + Social)
+- `df-expert-marketing` — CLV, churn, RFM, attribution, A/B testing, cohort analysis
+- `df-expert-retail` — Demand forecasting, price elasticity, basket analysis, seasonality
+- `df-expert-social` — Engagement metrics, sentiment, network effects, content classification
+
+### v0.3.3 — Expert Agent Layer: MLOps + Manufacturing
+- `df-expert-mlops` — Production readiness, inference latency, monitoring, retraining triggers
+- `df-expert-manufacturing` — Sensor data, predictive maintenance, yield, SPC, anomaly detection
+
+### v0.4.0 — Expert Consensus Protocol
+- Multiple experts review same output, vote on decisions
+- Conflicts escalated to user with expert rationale from each side
+- Expert confidence scores for recommendations
+
+---
+
+## [0.2.0] 2026-04-10 — Modular Skill + Workflow Restructure
+
+### Breaking Changes
+- Monolithic `skills/dataforge/SKILL.md` replaced with modular skill architecture
+- Scripts moved from `skills/dataforge/scripts/` to top-level `scripts/`
+- References moved from `skills/dataforge/references/` to top-level `references/`
+- Schema moved from `skills/dataforge/schema/` to top-level `schema/`
+- Hooks moved from `skills/dataforge/hooks/` to top-level `hooks/`
+- Extensions moved from `skills/dataforge/extensions/` to top-level `extensions/`
+- `requirements.txt` moved from `skills/dataforge/` to repo root
+- All agent script paths updated: `~/.claude/skills/dataforge/scripts/` -> `~/.claude/scripts/`
+- Install layout changed: scripts, references, schema, hooks now install to `~/.claude/` directly
+
+### Added
+
+**Atomic Skills (skills/dataforge-*/)**
+- `dataforge-preprocess/SKILL.md` — Data ingestion, validation, profiling, feature engineering
+- `dataforge-eda/SKILL.md` — Exploratory data analysis (parallel per-column + global + domain insights)
+- `dataforge-modeling/SKILL.md` — Model training, evaluation, SHAP interpretation, visualization
+- `dataforge-experiment/SKILL.md` — Experiment tracking, comparison, drift monitoring
+- `dataforge-deploy/SKILL.md` — Streamlit/FastAPI/Flask app generation
+- `dataforge-report/SKILL.md` — HTML/PDF report generation
+
+**Workflows (skills/dataforge-analysis/, skills/dataforge-pipeline/)**
+- `dataforge-analysis/SKILL.md` — Data Analysis workflow: preprocess -> EDA -> report
+- `dataforge-pipeline/SKILL.md` — Full pipeline workflow: all skills in sequence
+
+**New Agent**
+- `df-eda-global.md` — Dedicated global EDA agent (split from df-eda-column --mode=global)
+
+**New Commands**
+- `/dataforge analyze <dataset>` — Data analysis without modeling
+- `/dataforge compare <project-dir>` — Compare experiments across runs
+- `/dataforge-preprocess ingest|validate|profile|features` — Preprocessing sub-commands
+- `/dataforge-eda column|global|summary` — EDA sub-commands
+- `/dataforge-modeling train|evaluate|interpret|visualize` — Modeling sub-commands
+- `/dataforge-experiment status|compare|monitor|history` — Experiment sub-commands
+
+**Documentation**
+- `CLAUDE.md` — Root project constitution with full skill/workflow reference
+- `docs/ARCHITECTURE.md` — System design with layer diagram and data flow
+- `docs/COMMANDS.md` — Complete command reference for all skills and workflows
+
+### Changed
+- `skills/dataforge/SKILL.md` — Rewritten as pure router (~130 lines, down from 400)
+- `install.sh` — Rewritten for new modular layout (installs skills, scripts, refs, schema, hooks)
+- `agents/README.md` — Updated for new skill-based architecture
+- `README.md` — Updated for v0.2.0 architecture
+
+### Architecture Decisions
+- Flat skill directories (`skills/dataforge-eda/`, not nested) — matches Claude Code discovery
+- Scripts unchanged — all 14 Python scripts are standalone CLI tools, only invocation paths changed
+- Workflows reference skills by name — no logic duplication
+- Each skill independently invocable with `user-invokable: true`
+- Router is convenience layer, not required gateway
+
+---
+
 ## [0.1.0] 2026-04-04 — Initial Release
 
 ### Added

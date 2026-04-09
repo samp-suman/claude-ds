@@ -12,7 +12,7 @@ Usage (configured in ~/.claude/settings.json):
       "hooks": {
         "PostToolUse": [{
           "matcher": "Write|Edit",
-          "hooks": [{"type": "command", "command": "python3 ~/.claude/skills/dataforge/hooks/post-generate-lint.py \"$FILE_PATH\""}]
+          "hooks": [{"type": "command", "command": "python3 ~/.claude/hooks/post-generate-lint.py \"$FILE_PATH\""}]
         }]
       }
     }
@@ -58,7 +58,7 @@ def main():
         sys.exit(0)
 
     # Skip DataForge's own scripts (they are already tested)
-    if ".claude/skills/dataforge/scripts" in str(path).replace("\\", "/"):
+    if ".claude/scripts" in str(path).replace("\\", "/"):
         sys.exit(0)
 
     # Run pyflakes

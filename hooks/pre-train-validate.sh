@@ -8,7 +8,7 @@
 # Configured in ~/.claude/settings.json:
 #   "PreToolUse": [{"matcher": "Bash",
 #     "hooks": [{"type": "command",
-#       "command": "bash ~/.claude/skills/dataforge/hooks/pre-train-validate.sh"}]}]
+#       "command": "bash ~/.claude/hooks/pre-train-validate.sh"}]}]
 #
 # The COMMAND environment variable is set by Claude Code to the full Bash command.
 #

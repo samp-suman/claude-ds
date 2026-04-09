@@ -3,7 +3,7 @@
 > **Repo:** `claude-ds` | **Plugin name:** `DataForge` | **Skill command:** `/dataforge`
 
 DataForge is a Claude Code skill plugin that transforms any dataset into a complete,
-production-grade Data Science project. Give it a CSV and a target column — it handles
+production-grade Data Science project. Give it a CSV and a target column -- it handles
 everything: EDA, feature engineering, parallel model training, SHAP interpretability,
 Streamlit/FastAPI deployment, and a PDF report.
 
@@ -14,15 +14,16 @@ Streamlit/FastAPI deployment, and a PDF report.
 1. [What It Does](#what-it-does)
 2. [Architecture](#architecture)
 3. [Installation](#installation)
-4. [Usage — Step by Step](#usage--step-by-step)
+4. [Quick Start](#quick-start)
 5. [All Commands](#all-commands)
-6. [What Gets Generated](#what-gets-generated)
-7. [Parallel Execution](#parallel-execution)
-8. [Memory System](#memory-system)
-9. [Quality Gates](#quality-gates)
-10. [Extending DataForge](#extending-dataforge)
-11. [Development Workflow](#development-workflow)
-12. [Changelog](#changelog)
+6. [Skills & Workflows](#skills--workflows)
+7. [What Gets Generated](#what-gets-generated)
+8. [Parallel Execution](#parallel-execution)
+9. [Memory System](#memory-system)
+10. [Quality Gates](#quality-gates)
+11. [Extending DataForge](#extending-dataforge)
+12. [Development Workflow](#development-workflow)
+13. [Changelog](#changelog)
 
 ---
 
@@ -30,49 +31,71 @@ Streamlit/FastAPI deployment, and a PDF report.
 
 ```
 You:        /dataforge run data/titanic.csv Survived
-DataForge:  ✓ Ingest → ✓ Validate → ✓ EDA (parallel) → ✓ Features (parallel)
-            → ✓ Train 5 models simultaneously → ✓ Evaluate → ✓ SHAP
-            → ✓ Streamlit app → ✓ PDF report
+DataForge:  Ingest -> Validate -> EDA (parallel) -> Features (parallel)
+            -> Train 5 models simultaneously -> Evaluate -> SHAP
+            -> Streamlit app -> PDF report
 
 Generated:  titanic/
-            ├── src/models/lightgbm.pkl        ← Best model (ROC-AUC: 0.923)
-            ├── app/app.py                     ← Runnable Streamlit app
-            ├── reports/final_report.html      ← Full HTML report
-            ├── memory/decisions.md            ← Why each choice was made
-            └── CLAUDE.md                      ← Auto-loads context next session
+            ├── src/models/lightgbm.pkl        <- Best model (ROC-AUC: 0.923)
+            ├── app/app.py                     <- Runnable Streamlit app
+            ├── reports/final_report.html      <- Full HTML report
+            ├── memory/decisions.md            <- Why each choice was made
+            └── CLAUDE.md                      <- Auto-loads context next session
 ```
 
 ---
 
 ## Architecture
 
-```
-~/.claude/
-├── skills/dataforge/         ← Installed skill (source of truth: claude-ds/skills/)
-│   ├── SKILL.md              ← Orchestrator brain
-│   ├── requirements.txt
-│   ├── scripts/              ← 14 Python execution scripts
-│   ├── references/           ← 6 on-demand reference docs
-│   ├── schema/               ← JSON Schema for config + memory files
-│   ├── hooks/                ← PostToolUse + PreToolUse hooks
-│   └── extensions/           ← Kaggle, MLflow
-│
-└── agents/                   ← 11 sub-agents (df-*.md)
-    ├── df-eda-column.md      ← Spawned N times in parallel (one per column)
-    ├── df-train-model.md     ← Spawned per model (all models simultaneously)
-    └── ...
+DataForge follows a modular **skill + workflow** architecture:
 
-claude-ds/                    ← Development repo (this repo)
-├── skills/                   ← Source for ~/.claude/skills/
-├── agents/                   ← Source for ~/.claude/agents/df-*.md
-├── install.sh                ← Sync dev → ~/.claude/
-├── CHANGELOG.md
-└── README.md
+```
+┌──────────────────────────────────────────────────────┐
+│  /dataforge <command>                                │
+│  Router: parses command, delegates to skill/workflow  │
+└──────────────┬───────────────────────────────────────┘
+               ▼
+┌──────────────────────────────────────────────────────┐
+│  WORKFLOWS                                           │
+│  dataforge-pipeline  (full end-to-end)               │
+│  dataforge-analysis  (EDA without modeling)           │
+└──────────────┬───────────────────────────────────────┘
+               ▼
+┌──────────────────────────────────────────────────────┐
+│  SKILLS (atomic, independently invocable)            │
+│  preprocess │ eda │ modeling │ experiment             │
+│  deploy     │ report                                 │
+└──────────────┬───────────────────────────────────────┘
+               ▼
+┌──────────────────────────────────────────────────────┐
+│  AGENTS (12 sub-agents for parallel execution)       │
+│  + SCRIPTS (14 Python CLI tools)                     │
+└──────────────────────────────────────────────────────┘
 ```
 
-**Two layers:**
-- **Layer 1 (Global Skill):** `~/.claude/skills/dataforge/` — installed once, works from any directory
-- **Layer 2 (Generated Project):** Written into your working directory when you run a pipeline
+```
+claude-ds/                     <- Development repo (this repo)
+├── skills/                    <- 9 skill/workflow directories
+│   ├── dataforge/             <- Router
+│   ├── dataforge-preprocess/  <- Atomic: ingest, validate, features
+│   ├── dataforge-eda/         <- Atomic: EDA analysis + plots
+│   ├── dataforge-modeling/    <- Atomic: train, evaluate, SHAP
+│   ├── dataforge-experiment/  <- Atomic: tracking, comparison
+│   ├── dataforge-deploy/      <- Atomic: Streamlit/FastAPI
+│   ├── dataforge-report/      <- Atomic: HTML/PDF report
+│   ├── dataforge-analysis/    <- Workflow: preprocess + EDA + report
+│   └── dataforge-pipeline/    <- Workflow: full pipeline
+├── agents/                    <- 12 sub-agents (df-*.md)
+├── scripts/                   <- 14 Python CLI scripts
+├── references/                <- 6 on-demand reference docs
+├── schema/                    <- JSON schemas
+├── hooks/                     <- Pre/Post tool use hooks
+├── extensions/                <- Kaggle, MLflow
+├── docs/                      <- ARCHITECTURE.md, COMMANDS.md
+├── requirements.txt
+├── install.sh
+└── CLAUDE.md                  <- Project constitution
+```
 
 ---
 
@@ -83,76 +106,64 @@ claude-ds/                    ← Development repo (this repo)
 - Claude Code CLI installed
 - Python 3.9+
 
-### Step 1 — Clone the repo
+### Step 1 -- Clone the repo
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/claude-ds.git
 cd claude-ds
 ```
 
-### Step 2 — Install Python dependencies
+### Step 2 -- Install Python dependencies
 
 ```bash
-pip install -r skills/dataforge/requirements.txt
+pip install -r requirements.txt
 ```
 
-### Step 3 — Install the plugin
+### Step 3 -- Install the plugin
 
 ```bash
 bash install.sh
 ```
 
-This copies all skill files to `~/.claude/skills/dataforge/` and agents to `~/.claude/agents/`.
+This copies all skills, agents, scripts, references, schema, and hooks to `~/.claude/`.
 
-### Step 4 — Restart Claude Code
+### Step 4 -- Restart Claude Code
 
-Close and reopen Claude Code (or reload the window). The `/dataforge` command will now be available.
+Close and reopen Claude Code. The `/dataforge` command and all sub-skills will be available.
 
 ### Verify installation
 
 ```bash
-# Should show the dataforge skill
-ls ~/.claude/skills/dataforge/
+ls ~/.claude/skills/ | grep dataforge
 ls ~/.claude/agents/ | grep "^df-"
+ls ~/.claude/scripts/
 ```
 
 ---
 
-## Usage — Step by Step
+## Quick Start
 
-### Your first project
-
-**1. Start Claude Code in a directory with your dataset:**
 ```bash
 cd ~/my-projects
-claude  # or open Claude Code IDE extension
-```
+claude
 
-**2. Run the full pipeline:**
-```
+# Full pipeline
 /dataforge run data/churn.csv Churn
-```
 
-**3. Watch DataForge work:**
-- It validates your data (hard stops on leakage or tiny datasets)
-- Runs EDA in parallel — one agent per column simultaneously
-- Trains XGBoost, LightGBM, RandomForest, LogisticRegression all at once
-- Generates SHAP explanations and all plots
-- Creates a Streamlit app and HTML/PDF report
+# Just analyze (no modeling)
+/dataforge analyze data/churn.csv Churn
 
-**4. Explore the results:**
-```bash
-cd churn/
-make serve        # Start Streamlit app → http://localhost:8501
-make test         # Run generated tests
-open reports/final_report.html
-```
+# Just EDA
+/dataforge eda data/churn.csv
 
-**5. Come back next session:**
-```bash
-cd churn/
-claude            # CLAUDE.md auto-loads project context
-/dataforge status .   # See experiment history
+# Train models on preprocessed data
+/dataforge train data/processed/train.csv Churn
+
+# Check history
+/dataforge status churn/
+
+# Resume interrupted pipeline
+/dataforge resume churn/
 ```
 
 ---
@@ -161,164 +172,134 @@ claude            # CLAUDE.md auto-loads project context
 
 | Command | Description |
 |---------|------------|
-| `/dataforge run <dataset> <target>` | **Full pipeline** — ingest, validate, EDA, features, train all models, evaluate, interpret, visualize, deploy, report |
-| `/dataforge eda <dataset>` | EDA only — profile + parallel per-column analysis + correlation heatmap |
-| `/dataforge train <dataset> <target>` | Train all models in parallel, evaluate, update leaderboard |
-| `/dataforge validate <dataset>` | Data quality checks + leakage detection only |
-| `/dataforge deploy <project-dir>` | Generate Streamlit/FastAPI app for an existing project |
-| `/dataforge report <project-dir>` | Regenerate HTML/PDF report from existing results |
-| `/dataforge status <project-dir>` | Show memory: experiments, decisions, best pipeline |
-| `/dataforge resume <project-dir>` | Resume an interrupted pipeline from last checkpoint |
+| `/dataforge run <dataset> <target>` | Full pipeline -- ingest through report |
+| `/dataforge analyze <dataset> [target]` | Data analysis without modeling |
+| `/dataforge eda <dataset>` | EDA only -- parallel per-column + global |
+| `/dataforge preprocess <dataset> <target>` | Preprocessing + feature engineering |
+| `/dataforge train <dataset> <target>` | Train all models, evaluate, rank |
+| `/dataforge validate <dataset>` | Data quality checks + leakage detection |
+| `/dataforge deploy <project-dir>` | Generate Streamlit/FastAPI app |
+| `/dataforge report <project-dir>` | Regenerate HTML/PDF report |
+| `/dataforge status <project-dir>` | Show experiment history |
+| `/dataforge resume <project-dir>` | Resume interrupted pipeline |
+| `/dataforge monitor <dir> --new-data <path>` | Drift detection |
+| `/dataforge compare <project-dir>` | Compare experiment runs |
 
 ### Flags
 
 | Flag | Effect |
 |------|--------|
-| `--production` | Use FastAPI instead of Streamlit for deployment |
-| (default) | Streamlit deployment |
+| `--production` | Use FastAPI instead of Streamlit |
 
-### Examples
+See `docs/COMMANDS.md` for full command reference with all sub-commands.
 
-```
-# Binary classification
-/dataforge run data/titanic.csv Survived
+---
 
-# Regression
-/dataforge run data/housing.csv SalePrice
+## Skills & Workflows
 
-# Clustering (no target)
-/dataforge run data/customers.csv
+### Atomic Skills (independently invocable)
 
-# Production API
-/dataforge run data/fraud.csv is_fraud --production
+| Skill | Direct command | Purpose |
+|-------|---------------|---------|
+| `dataforge-preprocess` | `/dataforge-preprocess features <data> <target>` | Ingest, validate, profile, feature engineering |
+| `dataforge-eda` | `/dataforge-eda <data>` | EDA: stats, plots, correlations, domain insights |
+| `dataforge-modeling` | `/dataforge-modeling train <data> <target>` | Train, evaluate, interpret, visualize |
+| `dataforge-experiment` | `/dataforge-experiment status <dir>` | Experiment tracking, comparison, drift |
+| `dataforge-deploy` | `/dataforge-deploy <dir>` | Streamlit/FastAPI app generation |
+| `dataforge-report` | `/dataforge-report <dir>` | HTML/PDF report generation |
 
-# EDA only (quick exploration)
-/dataforge eda data/mydata.csv
+### Workflows (composite)
 
-# Resume after interruption
-/dataforge resume titanic/
-
-# Check what's been tried
-/dataforge status titanic/
-
-# Validate before sharing data
-/dataforge validate data/newdata.csv
-```
+| Workflow | Command | Steps |
+|----------|---------|-------|
+| `dataforge-analysis` | `/dataforge analyze <data>` | preprocess -> EDA -> report |
+| `dataforge-pipeline` | `/dataforge run <data> <target>` | preprocess -> EDA -> modeling -> deploy -> report |
 
 ---
 
 ## What Gets Generated
 
-After a full run, you get a complete project:
+After a full pipeline run:
 
 ```
 {project_name}/
-├── CLAUDE.md                     ← Auto-loads context in future Claude sessions
-├── dataforge.config.json         ← Project config (target, problem type, paths)
-├── Makefile                      ← make train | make serve | make test
+├── CLAUDE.md                     <- Auto-loads context in future sessions
+├── dataforge.config.json         <- Project config
+├── Makefile                      <- make serve | make test
 ├── requirements.txt
-├── README.md                     ← Project-specific documentation
+├── README.md
 │
 ├── data/
-│   ├── raw/                      ← Original data (never modified)
-│   ├── interim/                  ← profile.json, validation_report.json, eda_summary.json
-│   └── processed/                ← train.csv (cleaned + engineered features)
+│   ├── raw/                      <- Original data (never modified)
+│   ├── interim/                  <- profile, validation, EDA summary
+│   └── processed/                <- train.csv (cleaned + engineered)
 │
 ├── src/
+│   ├── models/                   <- .pkl artifacts + leaderboard.json
+│   ├── inference.py              <- Prediction entry point
 │   ├── data_pipeline.py
 │   ├── feature_engineering.py
 │   ├── model_training.py
-│   ├── evaluation.py
-│   ├── inference.py              ← Load model + predict on new data
-│   ├── config.py
-│   └── models/
-│       ├── lightgbm.pkl          ← Best model artifact
-│       ├── lightgbm_metrics.json
-│       ├── xgboost.pkl
-│       └── leaderboard.json      ← All models ranked by primary metric
+│   └── evaluation.py
 │
-├── notebooks/
-│   ├── eda.ipynb
-│   └── modeling.ipynb
+├── reports/
+│   ├── eda/                      <- Per-column plots + stats
+│   ├── shap_summary.png          <- Feature importance
+│   ├── confusion_matrix.png
+│   ├── model_comparison.png
+│   └── final_report.html         <- Master report
 │
 ├── app/
-│   ├── app.py                    ← Streamlit or FastAPI app (runnable)
+│   ├── app.py                    <- Streamlit/FastAPI app
 │   ├── requirements.txt
 │   └── Dockerfile
 │
-├── reports/
-│   ├── eda/                      ← Per-column plots + stats JSON
-│   │   ├── age_plot.png
-│   │   ├── correlation_heatmap.png
-│   │   └── target_distribution.png
-│   ├── shap_summary.png
-│   ├── shap_bar.png
-│   ├── confusion_matrix.png
-│   ├── model_comparison.png
-│   ├── final_report.html         ← Full embedded-image HTML report
-│   └── final_report.pdf          ← PDF version (requires WeasyPrint)
-│
-├── tests/
-│   ├── test_pipeline.py
-│   ├── test_inference.py
-│   └── test_data_quality.py
-│
 └── memory/
-    ├── experiments.json          ← All past runs with metrics
-    ├── decisions.md              ← Why each choice was made (human-readable)
-    ├── failed_transforms.json    ← Transforms that errored (skipped next run)
-    └── best_pipelines.json       ← Top pipelines (seeds future runs)
+    ├── experiments.json           <- Run history
+    ├── decisions.md               <- Why choices were made
+    ├── failed_transforms.json     <- What didn't work
+    └── best_pipelines.json        <- Winning configs
 ```
 
 ---
 
 ## Parallel Execution
 
-DataForge uses Claude Code's native `Agent` tool to spawn multiple sub-agents simultaneously:
-
 | Stage | Parallelism |
 |-------|------------|
-| EDA | One `df-eda-column` agent per column (batch ≤ 10 at once) |
-| Feature engineering | One `df-feature-column` agent per column (batch ≤ 10) |
-| **Model training** | **All models in ONE parallel batch** — biggest time saving |
-| Interpret + Visualize | Both run simultaneously after best model is selected |
-| Validate | Sequential (must gate everything after it) |
-| Deploy | Sequential (depends on trained model) |
-
-For a dataset with 15 columns and 5 models, a linear pipeline would call 25 steps sequentially.
-DataForge batches them: 2 EDA batches + 1 feature batch + 1 training batch = 4 rounds.
+| EDA | One agent per column (batch <= 10) |
+| Feature engineering | One agent per column (batch <= 10) |
+| **Model training** | **All models in one batch** |
+| Interpret + Visualize | Both simultaneously |
+| Validate | Sequential (gate) |
 
 ---
 
 ## Memory System
 
-Every generated project keeps a persistent memory in `memory/`:
+Every generated project keeps persistent memory in `memory/`:
 
 | File | Purpose |
 |------|---------|
-| `experiments.json` | Full record of every model run (config, metrics, artifact path) |
-| `decisions.md` | Plain English log of why each choice was made |
-| `failed_transforms.json` | Bad transforms to skip on future runs |
-| `best_pipelines.json` | Top configurations (used to seed hyperparameters next time) |
-
-Memory persists across Claude sessions because it lives in your project folder.
-On the next run, DataForge reads memory first to skip redundant work.
+| `experiments.json` | Full record of every model run |
+| `decisions.md` | Why each choice was made |
+| `failed_transforms.json` | Bad transforms to skip next time |
+| `best_pipelines.json` | Winning configs (seeds future runs) |
 
 ---
 
 ## Quality Gates
 
-Validation runs before anything else. **Hard stops halt the pipeline:**
+Validation runs before anything else:
 
 | Check | Threshold | Action |
 |-------|-----------|--------|
 | Minimum rows | < 50 | HARD STOP |
-| Target column | Not found | HARD STOP |
-| Target variance | Only 1 unique value | HARD STOP |
-| Target leakage | Correlation ≥ 0.99 with target | HARD STOP |
-| Class imbalance | Ratio > 10:1 | Warning — sets class_weight='balanced' |
-| High missing | Column > 50% null | Warning — imputes and notifies |
-| Duplicate rows | > 5% | Warning — deduplicates automatically |
+| Target missing | Not found | HARD STOP |
+| Target leakage | Correlation >= 0.99 | HARD STOP |
+| Class imbalance | > 10:1 | Warning |
+| High missing | > 50% per column | Warning |
+| Duplicates | > 5% | Warning |
 
 ---
 
@@ -326,80 +307,54 @@ Validation runs before anything else. **Hard stops halt the pipeline:**
 
 ### Add a new model
 
-1. Add a row to `skills/dataforge/references/model-catalog.md`
-2. Add a handler in `skills/dataforge/scripts/train.py`'s `get_model()` registry dict
+1. Add a row to `references/model-catalog.md`
+2. Add a handler in `scripts/train.py`'s `get_model()` registry
 3. Run `bash install.sh`
 
 ### Add a new data source
 
-1. Add a format handler in `skills/dataforge/scripts/ingest.py`'s `load_data()` function
+1. Add a format handler in `scripts/ingest.py`'s `load_data()` function
 2. Add detection logic in `detect_format()`
 3. Run `bash install.sh`
 
-### Add a new deployment target
+### Add a new skill
 
-1. Add a row to `skills/dataforge/references/deploy-targets.md`
-2. Add detection logic in `skills/dataforge/scripts/deploy_detect.py`
-3. Update the `df-deploy` agent's instructions
-4. Run `bash install.sh`
-
-### Add a Kaggle dataset
-
-```
-/dataforge run kaggle:owner/dataset-name TargetColumn
-```
-
-Requires `pip install kaggle` and `~/.kaggle/kaggle.json` credentials.
-
-### Enable MLflow tracking
-
-```bash
-pip install mlflow
-mlflow server --host 0.0.0.0 --port 5000
-export MLFLOW_TRACKING_URI=http://localhost:5000
-```
-
----
-
-## Development Workflow
-
-When making changes to DataForge:
-
-```bash
-# 1. Edit source files in claude-ds/
-# 2. Update CHANGELOG.md
-# 3. Sync to ~/.claude/
-bash install.sh
-
-# 4. Test the change
-/dataforge validate data/test.csv
-
-# 5. Commit and push
-git add .
-git commit -m "feat: description of change"
-git push
-git tag v0.1.x && git push --tags
-```
-
-See [CHANGELOG.md](CHANGELOG.md) for full version history.
+1. Create `skills/dataforge-{name}/SKILL.md`
+2. Add routing entry in `skills/dataforge/SKILL.md`
+3. Run `bash install.sh`
 
 ---
 
 ## Supported Problem Types
 
-| Type | Detection | Models Used |
-|------|----------|------------|
-| Binary classification | Target ≤ 2 unique values | LightGBM, XGBoost, RF, Logistic, CatBoost |
-| Multiclass classification | Target 3–20 unique values | Same + reports f1_weighted |
-| Regression | Target is float/int > 20 unique | LightGBM, XGBoost, RF, Ridge, Lasso, Linear |
+| Type | Detection | Models |
+|------|----------|--------|
+| Binary classification | Target <= 2 unique | LightGBM, XGBoost, RF, Logistic, CatBoost |
+| Multiclass | Target 3-20 unique | Same, reports f1_weighted |
+| Regression | Target float/int > 20 unique | LightGBM, XGBoost, RF, Ridge, Lasso, Linear |
 | Clustering | No target column | KMeans, DBSCAN, Hierarchical |
 | Time series | Datetime index + numeric target | LightGBM with lag features |
 
 ## Supported Input Formats
 
 CSV, TSV, JSON, JSONL, Parquet, Excel (.xlsx/.xls), SQLite (.db/.sqlite),
-SQLAlchemy URI (`sqlite:///db.sqlite?table=users`), HTTP/HTTPS URL, Pickle,
-Kaggle slug (`kaggle:owner/dataset-name`)
+SQLAlchemy URI, HTTP/HTTPS URL, Pickle, Kaggle slug
+
+---
+
+## Development Workflow
+
+```bash
+# 1. Edit source files in claude-ds/
+# 2. Sync to ~/.claude/
+bash install.sh
+
+# 3. Test the change
+/dataforge validate data/test.csv
+
+# 4. Update CHANGELOG.md
+# 5. Commit and push
+```
 
 ---
 
@@ -407,4 +362,4 @@ Kaggle slug (`kaggle:owner/dataset-name`)
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
-Current version: **v0.1.0** (2026-04-04) — Initial release
+Current version: **v0.2.0** (2026-04-10) -- Modular skill + workflow restructure

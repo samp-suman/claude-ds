@@ -28,7 +28,7 @@ other instances of yourself, each analyzing a different column.
 Run the EDA script for this specific column:
 
 ```bash
-python3 ~/.claude/skills/dataforge/scripts/eda.py \
+python3 ~/.claude/scripts/eda.py \
   --data "{dataset_path}" \
   --column "{column_name}" \
   --output "{output_dir}" \
@@ -49,7 +49,7 @@ Read `{column_name}_stats.json` and interpret the findings:
 ### Global Mode
 
 ```bash
-python3 ~/.claude/skills/dataforge/scripts/eda.py \
+python3 ~/.claude/scripts/eda.py \
   --data "{dataset_path}" \
   --mode global \
   --target "{target_column}" \
