@@ -40,6 +40,21 @@ architecture inspired by [claude-seo](https://github.com/AgriciDaniel/claude-seo
 └───────────────────┬─────────────────────────────────┘
                     ▼
 ┌─────────────────────────────────────────────────────┐
+│  EXPERT AGENTS (review + verify + guide) [v0.3.0]   │
+│                                                     │
+│  Methodology:        Domain (auto-detected):        │
+│  df-expert-ds        df-expert-healthcare           │
+│  df-expert-stats     df-expert-finance              │
+│                      df-expert-marketing            │
+│  Lead:               df-expert-retail               │
+│  df-expert-lead      df-expert-social               │
+│  (collates + acts)   df-expert-manufacturing        │
+│                                                     │
+│  Triage: expert_triage.py → skip/light/full         │
+│  Domain: domain_detect.py → auto-detect domain      │
+└───────────────────┬─────────────────────────────────┘
+                    ▼
+┌─────────────────────────────────────────────────────┐
 │  SKILLS (atomic, independently invocable)           │
 │  dataforge-preprocess  │  dataforge-eda             │
 │  dataforge-modeling    │  dataforge-experiment       │
@@ -62,6 +77,7 @@ architecture inspired by [claude-seo](https://github.com/AgriciDaniel/claude-seo
 │  eda.py     │  features.py  │  train.py             │
 │  evaluate.py│  interpret.py │  visualize.py          │
 │  deploy_detect.py │  report.py │  memory_*.py        │
+│  domain_detect.py │  expert_triage.py               │
 │  Standalone, JSON output, exit codes 0/1/2          │
 └─────────────────────────────────────────────────────┘
 ```
@@ -82,10 +98,10 @@ Development repo (`claude-ds/`) installs to `~/.claude/`:
 │   ├── dataforge-report/SKILL.md       # Atomic skill
 │   ├── dataforge-analysis/SKILL.md     # Workflow
 │   └── dataforge-pipeline/SKILL.md     # Workflow
-├── agents/df-*.md                      # 12 sub-agents
-├── scripts/*.py                        # 14 Python scripts
-├── references/*.md                     # 6 reference docs
-├── schema/*.json                       # 2 JSON schemas
+├── agents/df-*.md                      # 21 sub-agents (12 execution + 9 expert)
+├── scripts/*.py                        # 16 Python scripts
+├── references/*.md                     # 12 reference docs (6 general + 6 domain)
+├── schema/*.json                       # 3 JSON schemas
 └── hooks/*                             # 2 hooks
 ```
 
@@ -104,8 +120,17 @@ VALIDATE (validate.py) ──► validation_report.json + .validation_passed
 PROFILE (data_profiler.py) ──► profile.json + dataforge.config.json
     │
     ▼
+DOMAIN DETECT (domain_detect.py) ──► expert_cache/domain.json
+    │
+    ▼
+EXPERT CHECKPOINT 1 (triage → experts → lead) ──► preprocessing review
+    │ (block = pause for user)
+    ▼
 EDA (eda.py, parallel) ──► reports/eda/{col}_stats.json + {col}_plot.png
     │                       eda_summary.json + correlation_heatmap.png
+    ▼
+EXPERT CHECKPOINT 2 (triage → experts → lead) ──► EDA review
+    │
     ▼
 FEATURES (features.py, parallel) ──► data/processed/train.csv
     │
@@ -114,6 +139,9 @@ TRAIN (train.py, ALL parallel) ──► src/models/{model}.pkl + {model}_metric
     │
     ▼
 EVALUATE (evaluate.py) ──► src/models/leaderboard.json
+    │
+    ▼
+EXPERT CHECKPOINT 3 (triage → experts → lead) ──► modeling review
     │
     ├──► INTERPRET (interpret.py) ──► shap_summary.png, shap_bar.png
     │                                  (parallel)
@@ -134,6 +162,7 @@ REPORT (report.py) ──► reports/final_report.html
 | Feature engineering | One agent per column | <= 10 per batch |
 | **Model training** | **All models at once** | **Single batch** |
 | Interpret + Visualize | Both simultaneously | 2 agents |
+| **Expert review (full)** | **Methodology + domain parallel, then lead** | **2-3 experts + lead** |
 
 ## Quality Gate System
 
@@ -189,158 +218,88 @@ Each generated project persists memory in `memory/`:
 
 ---
 
-## Roadmap: Expert Agent Layer (v0.3.0+)
+## Expert Agent Layer (v0.3.0)
 
-The next evolution of DataForge adds an **expert agent layer** -- specialized
-agents that act as senior practitioners who review, verify, and guide decisions
-made by the execution agents. These experts don't just process data -- they
-apply deep domain knowledge and methodological rigor.
+DataForge includes an expert review layer that acts as senior practitioners
+reviewing, auto-correcting, and guiding pipeline decisions.
 
-### Layer Architecture (Target)
+### Expert Types
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  EXPERT AGENTS (review + verify + guide)                    │
-│                                                             │
-│  ┌─────────────────────┐  ┌──────────────────────────────┐  │
-│  │  DOMAIN EXPERTS     │  │  METHODOLOGY EXPERTS         │  │
-│  │                     │  │                              │  │
-│  │  df-expert-health   │  │  df-expert-datascientist     │  │
-│  │  df-expert-finance  │  │  df-expert-statistician      │  │
-│  │  df-expert-market   │  │  df-expert-mlops             │  │
-│  │  df-expert-retail   │  │                              │  │
-│  │  df-expert-social   │  │  10+ years experience        │  │
-│  │  df-expert-mfg      │  │  Verify techniques, catch    │  │
-│  │                     │  │  methodological errors,      │  │
-│  │  Know domain KPIs,  │  │  suggest better approaches   │  │
-│  │  business logic,    │  │                              │  │
-│  │  feature meaning    │  │                              │  │
-│  └─────────────────────┘  └──────────────────────────────┘  │
-└──────────────────────┬──────────────────────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│  SKILLS + WORKFLOWS (orchestrate)                           │
-└──────────────────────┬──────────────────────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│  EXECUTION AGENTS + SCRIPTS (process)                       │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Domain Expert Agents
-
-Domain experts understand the business context of the data. They are spawned
-based on auto-detected or user-specified domain. Each expert knows:
-
-| Agent | Domain | Knowledge |
-|-------|--------|-----------|
-| `df-expert-healthcare` | Healthcare, clinical, pharma | HIPAA awareness, clinical feature interpretation (BMI, vitals, lab ranges), survival analysis, class imbalance in diagnosis, confounding variables |
-| `df-expert-finance` | Banking, fintech, insurance | Risk scoring, fraud patterns, regulatory features, time-series financial data, PD/LGD/EAD models, credit scoring |
-| `df-expert-marketing` | Marketing, advertising, CRM | Customer lifetime value, churn signals, RFM segmentation, attribution modeling, A/B test analysis, cohort analysis |
-| `df-expert-retail` | E-commerce, retail, supply chain | Demand forecasting, price elasticity, basket analysis, inventory signals, seasonality, category management |
-| `df-expert-social` | Social media, content, NLP | Engagement metrics, sentiment features, network effects, viral signals, content classification, bot detection |
-| `df-expert-manufacturing` | IoT, manufacturing, quality | Sensor data patterns, predictive maintenance, yield optimization, SPC signals, anomaly detection |
-
-**What domain experts do at each stage:**
-
-1. **After EDA** -- Review findings through domain lens:
-   - Flag features with domain-specific meaning (e.g., "HbA1c > 6.5 means diabetes")
-   - Suggest domain-specific feature engineering (e.g., "create BMI from height/weight")
-   - Identify business-relevant outliers vs data errors
-   - Recommend domain-appropriate analysis types
-
-2. **After preprocessing** -- Verify transforms make domain sense:
-   - Catch harmful transforms (e.g., "don't log-transform age in healthcare")
-   - Suggest domain-standard encodings
-   - Flag dropped features that have domain importance
-
-3. **After modeling** -- Interpret results through domain lens:
-   - Validate that top SHAP features make domain sense
-   - Flag surprising features (possible leakage or spurious correlations)
-   - Suggest domain-appropriate metrics (e.g., sensitivity over accuracy for diagnosis)
-   - Provide business impact interpretation
-
-### Methodology Expert Agents
-
-Methodology experts act as senior data scientists and statisticians who verify
-that the right techniques are being used correctly.
+**Methodology Experts** (verify techniques):
 
 | Agent | Role | Expertise |
 |-------|------|-----------|
-| `df-expert-datascientist` | Senior DS (10+ yr) | End-to-end pipeline review, feature selection strategy, model selection rationale, experiment design, bias detection, overfitting risk |
-| `df-expert-statistician` | Senior Statistician (10+ yr) | Distribution assumptions, hypothesis testing validity, correlation vs causation, sample size adequacy, statistical power, confidence intervals |
-| `df-expert-mlops` | ML Engineer / MLOps | Model serving readiness, inference latency, model size constraints, A/B testing design, monitoring strategy, retraining triggers |
+| `df-expert-datascientist` | Senior DS (10+ yr) | Pipeline review, model selection, overfitting, bias |
+| `df-expert-statistician` | Senior Statistician (10+ yr) | Distributions, tests, assumptions, leakage |
 
-**What methodology experts do at each stage:**
+**Domain Experts** (understand business context, auto-detected):
 
-1. **After preprocessing** -- `df-expert-statistician` reviews:
-   - Are imputation methods statistically appropriate?
-   - Is scaling applied correctly (fit on train only)?
-   - Are encoding choices justified for the model types?
-   - Is there data leakage in the preprocessing pipeline?
+| Agent | Domain | Knowledge |
+|-------|--------|-----------|
+| `df-expert-healthcare` | Healthcare/Clinical | Clinical thresholds, HIPAA, confounders, survival analysis |
+| `df-expert-finance` | Banking/Fintech | Risk scoring, fraud, regulatory, temporal leakage, fair lending |
+| `df-expert-marketing` | Marketing/CRM | CLV, churn, RFM, attribution, A/B testing, cohort analysis |
+| `df-expert-retail` | Retail/E-commerce | Demand forecasting, price elasticity, basket analysis, seasonality |
+| `df-expert-social` | Social Media/NLP | Engagement, sentiment, network effects, bot detection |
+| `df-expert-manufacturing` | IoT/Manufacturing | Sensor data, predictive maintenance, SPC, yield optimization |
 
-2. **After EDA** -- `df-expert-datascientist` reviews:
-   - Are the right statistical tests being used?
-   - Are correlations being interpreted correctly?
-   - Is the feature study comprehensive enough?
-   - Should additional analysis be done (PCA, clustering, time decomposition)?
+**Lead Expert** (collates findings, makes final call):
 
-3. **After modeling** -- `df-expert-datascientist` reviews:
-   - Is the train/test split appropriate (stratified? temporal?)?
-   - Is cross-validation setup correct for this problem type?
-   - Are the right metrics being used as primary?
-   - Is there overfitting (large gap between train and CV scores)?
-   - Should hyperparameter tuning be done?
-   - Are there better model architectures to try?
+| Agent | Role |
+|-------|------|
+| `df-expert-lead` | Collates all expert findings, applies auto-corrections, returns verdict |
 
-4. **After evaluation** -- `df-expert-mlops` reviews:
-   - Is the model production-ready? (size, latency, dependencies)
-   - Is the monitoring strategy appropriate?
-   - Are the right drift metrics being tracked?
-   - Is the deployment target appropriate for the use case?
+### Adaptive Expert Triage
 
-### Expert Integration Pattern
+Experts trigger based on data complexity, not blindly at every stage:
 
-Experts are invoked as **review checkpoints** between pipeline stages. They
-receive the outputs of the previous stage and return a structured review:
+```
+Stage completes → expert_triage.py (complexity score)
+  ├── score < 0.2:  skip (no experts, 0 token cost)
+  ├── score 0.2-0.5: light (lead expert only, ~1 agent call)
+  └── score > 0.5:  full (methodology + domain + lead, ~3-4 agent calls)
 
-```json
-{
-  "agent": "df-expert-healthcare",
-  "stage_reviewed": "eda",
-  "verdict": "approve|flag|block",
-  "findings": [
-    {
-      "severity": "critical|warning|suggestion",
-      "finding": "HbA1c feature dropped as high-cardinality but is the primary diabetes indicator",
-      "recommendation": "Keep HbA1c, bin into clinical ranges: normal (<5.7), prediabetes (5.7-6.4), diabetes (>6.5)",
-      "domain_rationale": "Standard ADA diagnostic threshold"
-    }
-  ],
-  "approved_decisions": ["age imputation with median", "BMI feature creation"],
-  "domain_features_suggested": ["BMI = weight_kg / (height_m ^ 2)", "age_group binning"]
-}
+Always full if: --production, first run, or --domain flag set
 ```
 
-**Verdict meanings:**
-- `approve` -- Expert agrees with all decisions, pipeline continues
-- `flag` -- Expert has suggestions but doesn't block; findings logged to `memory/decisions.md`
-- `block` -- Expert found a critical issue (e.g., target leakage, harmful transform); pipeline pauses for user review
+### Expert Checkpoints
+
+| Checkpoint | After Stage | What's Reviewed |
+|-----------|-------------|-----------------|
+| 1 | Preprocessing | Imputation, encoding, feature drops, leakage, domain features |
+| 2 | EDA | Distributions, correlations, outliers, imbalance, domain patterns |
+| 3 | Modeling | Train-test gap, metric selection, SHAP sanity, calibration |
+
+### Lead Verdict
+
+The lead expert returns one of three verdicts:
+
+- **approve** — Continue normally
+- **flag** — Continue, advisories logged to `memory/decisions.md`
+- **block** — Pause pipeline, present critical issues to user for review
+
+### Token Optimization
+
+1. **Lazy loading**: Domain reference docs loaded only when domain expert triggers
+2. **Tiered depth**: Skip/light/full based on complexity score
+3. **Agent continuity**: Experts spawned once, continued via SendMessage at later stages
+4. **Cross-stage caching**: All findings cached in `expert_cache/` directory
+5. **Cache-friendly prompts**: Static persona + dynamic inputs structure for prompt caching
 
 ### Domain Auto-Detection
 
-The pipeline auto-detects domain from:
-1. Column names (e.g., `diagnosis`, `icd_code` -> healthcare)
-2. Dataset filename (e.g., `patient_records.csv` -> healthcare)
-3. Value patterns (e.g., dollar amounts, dates, medical codes)
-4. User-specified domain flag: `/dataforge run data.csv target --domain healthcare`
+`domain_detect.py` scores each domain using 4 layers:
+- Column name keywords (weight 0.4)
+- Filename patterns (weight 0.2)
+- Value patterns from profile (weight 0.3)
+- Feature type distribution (weight 0.1)
 
-### Implementation Plan
+Confidence >= 0.5 activates domain expert; otherwise "general" (no domain expert).
 
-| Phase | Deliverable |
-|-------|------------|
-| v0.3.0 | `df-expert-datascientist` + `df-expert-statistician` -- methodology review at each stage |
-| v0.3.1 | Domain auto-detection logic + `df-expert-healthcare` + `df-expert-finance` |
-| v0.3.2 | `df-expert-marketing` + `df-expert-retail` + `df-expert-social` |
-| v0.3.3 | `df-expert-mlops` + `df-expert-manufacturing` |
-| v0.4.0 | Expert consensus protocol (multiple experts vote, conflicts escalated to user) |
+---
+
+## Roadmap
+
+| Version | Deliverable |
+|---------|------------|
+| v0.4.0 | Expert consensus protocol (multiple experts vote, conflicts escalated) |

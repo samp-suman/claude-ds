@@ -5,7 +5,9 @@
 DataForge is a Claude Code skill plugin that transforms any dataset into a complete,
 production-grade Data Science project. Give it a CSV and a target column -- it handles
 everything: EDA, feature engineering, parallel model training, SHAP interpretability,
-Streamlit/FastAPI deployment, and a PDF report.
+Streamlit/FastAPI deployment, and a PDF report. Expert agents (senior data scientists,
+statisticians, and domain specialists) review each stage to catch mistakes and
+apply domain-specific best practices.
 
 ---
 
@@ -17,13 +19,14 @@ Streamlit/FastAPI deployment, and a PDF report.
 4. [Quick Start](#quick-start)
 5. [All Commands](#all-commands)
 6. [Skills & Workflows](#skills--workflows)
-7. [What Gets Generated](#what-gets-generated)
-8. [Parallel Execution](#parallel-execution)
-9. [Memory System](#memory-system)
-10. [Quality Gates](#quality-gates)
-11. [Extending DataForge](#extending-dataforge)
-12. [Development Workflow](#development-workflow)
-13. [Changelog](#changelog)
+7. [Expert Agents](#expert-agents)
+8. [What Gets Generated](#what-gets-generated)
+9. [Parallel Execution](#parallel-execution)
+10. [Memory System](#memory-system)
+11. [Quality Gates](#quality-gates)
+12. [Extending DataForge](#extending-dataforge)
+13. [Development Workflow](#development-workflow)
+14. [Changelog](#changelog)
 
 ---
 
@@ -68,8 +71,13 @@ DataForge follows a modular **skill + workflow** architecture:
 └──────────────┬───────────────────────────────────────┘
                ▼
 ┌──────────────────────────────────────────────────────┐
-│  AGENTS (12 sub-agents for parallel execution)       │
-│  + SCRIPTS (14 Python CLI tools)                     │
+│  EXPERT AGENTS (9 review + verify + guide)            │
+│  methodology (DS, stats) + domain (6 domains) + lead │
+└──────────────┬───────────────────────────────────────┘
+               ▼
+┌──────────────────────────────────────────────────────┐
+│  AGENTS (12 execution agents for parallel work)      │
+│  + SCRIPTS (16 Python CLI tools)                     │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -85,9 +93,9 @@ claude-ds/                     <- Development repo (this repo)
 │   ├── dataforge-report/      <- Atomic: HTML/PDF report
 │   ├── dataforge-analysis/    <- Workflow: preprocess + EDA + report
 │   └── dataforge-pipeline/    <- Workflow: full pipeline
-├── agents/                    <- 12 sub-agents (df-*.md)
-├── scripts/                   <- 14 Python CLI scripts
-├── references/                <- 6 on-demand reference docs
+├── agents/                    <- 21 agents (12 execution + 9 expert)
+├── scripts/                   <- 16 Python CLI scripts
+├── references/                <- 12 reference docs (6 general + 6 domain)
 ├── schema/                    <- JSON schemas
 ├── hooks/                     <- Pre/Post tool use hooks
 ├── extensions/                <- Kaggle, MLflow
@@ -217,6 +225,57 @@ See `docs/COMMANDS.md` for full command reference with all sub-commands.
 
 ---
 
+## Expert Agents
+
+DataForge includes an expert review layer that catches mistakes a junior data
+scientist would miss. Experts trigger adaptively based on data complexity.
+
+### How It Works
+
+```
+Stage completes -> expert_triage.py (complexity score)
+  score < 0.2:   skip (no review, no token cost)
+  score 0.2-0.5: light (lead expert only)
+  score > 0.5:   full (methodology + domain experts + lead)
+```
+
+Always full review with `--production`, first run, or explicit `--domain` flag.
+
+### Expert Types
+
+| Type | Agents | What They Check |
+|------|--------|----------------|
+| **Methodology** | Data Scientist, Statistician | Pipeline correctness, overfitting, leakage, statistical validity |
+| **Domain** | Healthcare, Finance, Marketing, Retail, Social, Manufacturing | Domain-specific features, metrics, thresholds, regulatory concerns |
+| **Lead** | Lead Expert | Collates all findings, applies auto-corrections, returns verdict |
+
+### Supported Domains (auto-detected)
+
+| Domain | Example Signals | Key Expertise |
+|--------|----------------|---------------|
+| Healthcare | patient, diagnosis, HbA1c, BMI | Clinical thresholds, HIPAA, sensitivity-focused metrics |
+| Finance | transaction, credit, fraud, balance | Temporal splits, fair lending, Gini/KS metrics |
+| Marketing | campaign, churn, CLV, conversion | RFM segmentation, cohort analysis, lift charts |
+| Retail | product, order, inventory, price | Demand forecasting, price elasticity, stockout handling |
+| Social | post, engagement, sentiment, follower | Engagement rates, bot detection, text preprocessing |
+| Manufacturing | sensor, temperature, vibration, defect | Rolling aggregations, SPC, predictive maintenance |
+
+### Checkpoints
+
+| # | After Stage | Reviews |
+|---|-------------|---------|
+| 1 | Preprocessing | Imputation, encoding, feature drops, leakage |
+| 2 | EDA | Distributions, correlations, outliers, domain patterns |
+| 3 | Modeling | Train-test gap, metric selection, SHAP sanity |
+
+### Verdicts
+
+- **approve** -- pipeline continues
+- **flag** -- continue, advisories logged to `memory/decisions.md`
+- **block** -- pause, critical issue presented to user for review
+
+---
+
 ## What Gets Generated
 
 After a full pipeline run:
@@ -271,6 +330,7 @@ After a full pipeline run:
 | Feature engineering | One agent per column (batch <= 10) |
 | **Model training** | **All models in one batch** |
 | Interpret + Visualize | Both simultaneously |
+| **Expert review (full)** | **Methodology + domain parallel, then lead** |
 | Validate | Sequential (gate) |
 
 ---
@@ -362,4 +422,4 @@ bash install.sh
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
-Current version: **v0.2.0** (2026-04-10) -- Modular skill + workflow restructure
+Current version: **v0.3.0** (2026-04-10) -- Expert Agent Layer

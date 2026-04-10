@@ -34,6 +34,20 @@ and returns a JSON result as its last output line.
 | `df-report` | Assemble HTML/PDF report | dataforge-report | Sequential |
 | `df-monitor` | Data/concept drift detection | dataforge-experiment | Sequential |
 
+### Expert Agents (v0.3.0)
+
+| Agent | Purpose | Spawned by | Parallelism |
+|-------|---------|-----------|-------------|
+| `df-expert-lead` | Collates findings, makes final verdict | pipeline, skills | Sequential (after experts) |
+| `df-expert-datascientist` | Senior DS: pipeline, modeling, experiment review | pipeline, skills | Parallel with other experts |
+| `df-expert-statistician` | Senior Statistician: distributions, tests, leakage | pipeline, skills | Parallel with other experts |
+| `df-expert-healthcare` | Healthcare domain: clinical features, HIPAA, thresholds | pipeline (if domain=healthcare) | Parallel with methodology experts |
+| `df-expert-finance` | Finance domain: risk, fraud, regulatory, credit | pipeline (if domain=finance) | Parallel with methodology experts |
+| `df-expert-marketing` | Marketing domain: CLV, churn, RFM, attribution | pipeline (if domain=marketing) | Parallel with methodology experts |
+| `df-expert-retail` | Retail domain: demand, pricing, basket, seasonality | pipeline (if domain=retail) | Parallel with methodology experts |
+| `df-expert-social` | Social domain: engagement, sentiment, network | pipeline (if domain=social) | Parallel with methodology experts |
+| `df-expert-manufacturing` | Manufacturing domain: sensors, SPC, maintenance | pipeline (if domain=manufacturing) | Parallel with methodology experts |
+
 ---
 
 ## Parallel Execution Diagram
@@ -51,6 +65,23 @@ Training stage:
 
 Post-training:
   [df-interpret: best_model] [df-visualize: all plots]             (parallel pair)
+
+Expert review (full mode):
+  [df-expert-datascientist] [df-expert-statistician] [df-expert-{domain}]  (parallel)
+      └─────────────────┬──────────────────────────────┘
+                        ▼
+               [df-expert-lead]  (sequential, collates all findings)
+```
+
+### Expert Triage Flow
+
+```
+Stage completes → expert_triage.py (complexity score)
+  ├── score < 0.2:  skip (no experts)
+  ├── score 0.2-0.5: light (df-expert-lead only)
+  └── score > 0.5:  full (methodology + domain experts → lead)
+
+Always full if: --production, first run, or --domain flag set
 ```
 
 ---

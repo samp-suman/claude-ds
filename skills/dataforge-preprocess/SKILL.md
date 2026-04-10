@@ -178,6 +178,29 @@ Spawn in parallel:
 ... (up to 10 at once, then next batch)
 ```
 
+### Step 5b — Expert Checkpoint: Preprocessing Review (Optional)
+
+If running as part of a workflow (pipeline or analysis), the workflow handles
+expert checkpoints. When running standalone (`/dataforge-preprocess features`),
+run the checkpoint here:
+
+```bash
+python3 ~/.claude/scripts/domain_detect.py \
+  --data "{OUTPUT_DIR}/data/raw/{filename}" \
+  --profile "{OUTPUT_DIR}/data/interim/profile.json" \
+  --output "{OUTPUT_DIR}/data/interim/expert_cache/domain.json"
+
+python3 ~/.claude/scripts/expert_triage.py \
+  --stage preprocessing \
+  --profile "{OUTPUT_DIR}/data/interim/profile.json" \
+  --validation "{OUTPUT_DIR}/data/interim/validation_report.json" \
+  --cache-dir "{OUTPUT_DIR}/data/interim/expert_cache" \
+  --output "{OUTPUT_DIR}/data/interim/expert_cache/triage_preprocessing.json"
+```
+
+Based on `complexity_level`: skip / light (lead only) / full (all experts + lead).
+If lead verdict is **block**: pause for user. Otherwise continue.
+
 ### Step 6 — Assemble Processed Dataset
 
 Collect all agent results. Write `{OUTPUT_DIR}/data/processed/train.csv`.

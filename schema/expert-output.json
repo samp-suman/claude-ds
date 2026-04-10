@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DataForge Expert Output Schema",
+  "description": "Contracts for individual expert findings and lead expert verdicts",
+
+  "definitions": {
+    "finding": {
+      "type": "object",
+      "required": ["severity", "finding", "recommendation"],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "warning", "suggestion"],
+          "description": "critical = potential data integrity or correctness issue; warning = suboptimal but not harmful; suggestion = improvement opportunity"
+        },
+        "finding": {
+          "type": "string",
+          "description": "Clear description of what was found"
+        },
+        "recommendation": {
+          "type": "string",
+          "description": "Specific actionable recommendation"
+        },
+        "domain_rationale": {
+          "type": "string",
+          "description": "Domain-specific reasoning (domain experts only)"
+        },
+        "auto_correctable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this can be auto-corrected without user input"
+        },
+        "correction_action": {
+          "type": "string",
+          "description": "If auto_correctable, the specific action to take (e.g., 'add class_weight=balanced')"
+        },
+        "affected_columns": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Column names this finding relates to"
+        },
+        "affected_models": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Model names this finding relates to (modeling stage)"
+        }
+      }
+    },
+
+    "expert_output": {
+      "type": "object",
+      "required": ["agent", "stage_reviewed", "findings"],
+      "properties": {
+        "agent": {
+          "type": "string",
+          "description": "Agent name (e.g., df-expert-healthcare, df-expert-datascientist)"
+        },
+        "stage_reviewed": {
+          "type": "string",
+          "enum": ["preprocessing", "eda", "modeling"],
+          "description": "Which pipeline stage was reviewed"
+        },
+        "findings": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/finding"},
+          "description": "All findings from this expert"
+        },
+        "approved_decisions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Decisions from the stage that the expert explicitly approves"
+        },
+        "domain_features_suggested": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Domain-specific feature engineering suggestions (domain experts only)"
+        },
+        "metrics_recommended": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Domain-appropriate metrics to use (domain experts only)"
+        }
+      }
+    },
+
+    "lead_verdict": {
+      "type": "object",
+      "required": ["stage", "verdict", "actions_taken", "advisories", "blocks"],
+      "properties": {
+        "stage": {
+          "type": "string",
+          "enum": ["preprocessing", "eda", "modeling"],
+          "description": "Pipeline stage this verdict covers"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": ["approve", "flag", "block"],
+          "description": "approve = continue; flag = continue with logged advisories; block = pause for user review"
+        },
+        "actions_taken": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["action", "source"],
+            "properties": {
+              "action": {
+                "type": "string",
+                "description": "What was auto-corrected"
+              },
+              "source": {
+                "type": "string",
+                "description": "Which expert recommended this"
+              },
+              "details": {
+                "type": "string",
+                "description": "Implementation details"
+              }
+            }
+          },
+          "description": "Auto-corrections applied by the lead (from auto_correctable findings)"
+        },
+        "advisories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["advisory", "source", "severity"],
+            "properties": {
+              "advisory": {
+                "type": "string",
+                "description": "What to be aware of"
+              },
+              "source": {
+                "type": "string",
+                "description": "Which expert flagged this"
+              },
+              "severity": {
+                "type": "string",
+                "enum": ["warning", "suggestion"]
+              }
+            }
+          },
+          "description": "Non-blocking findings logged to memory/decisions.md"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["issue", "source", "recommendation"],
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "Critical issue that requires user review"
+              },
+              "source": {
+                "type": "string",
+                "description": "Which expert raised this block"
+              },
+              "recommendation": {
+                "type": "string",
+                "description": "What the expert recommends"
+              }
+            }
+          },
+          "description": "Critical issues that pause the pipeline for user review"
+        },
+        "expert_count": {
+          "type": "integer",
+          "description": "Number of experts consulted"
+        },
+        "complexity_level": {
+          "type": "string",
+          "enum": ["light", "full"],
+          "description": "Whether this was a light (lead-only) or full (all experts) review"
+        },
+        "domain": {
+          "type": "string",
+          "description": "Detected or specified domain"
+        }
+      }
+    }
+  },
+
+  "expert_output": {
+    "$ref": "#/definitions/expert_output"
+  },
+  "lead_verdict": {
+    "$ref": "#/definitions/lead_verdict"
+  }
+}

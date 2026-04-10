@@ -72,6 +72,32 @@ Invoke the `dataforge-eda` skill:
 4. Merge results into `eda_summary.json`
 5. Write `src/data_pipeline.py`
 
+### Step 2b — Expert Checkpoint: EDA Review
+
+Run domain detection and expert triage:
+
+```bash
+python3 ~/.claude/scripts/domain_detect.py \
+  --data "{OUTPUT_DIR}/data/raw/{filename}" \
+  --profile "{OUTPUT_DIR}/data/interim/profile.json" \
+  --output "{OUTPUT_DIR}/data/interim/expert_cache/domain.json"
+
+python3 ~/.claude/scripts/expert_triage.py \
+  --stage eda \
+  --profile "{OUTPUT_DIR}/data/interim/profile.json" \
+  --eda-summary "{OUTPUT_DIR}/reports/eda/eda_summary.json" \
+  --cache-dir "{OUTPUT_DIR}/data/interim/expert_cache" \
+  --output "{OUTPUT_DIR}/data/interim/expert_cache/triage_eda.json"
+```
+
+Based on `complexity_level`:
+- **skip**: Log "expert review skipped", continue.
+- **light**: Spawn `df-expert-lead` with `complexity_level=light`.
+- **full**: Spawn methodology + domain experts in parallel, then lead.
+
+If lead verdict is **block**: pause for user review.
+If **flag** or **approve**: apply auto-corrections, log advisories, continue.
+
 ### Step 3 — Feature Engineering (Optional)
 
 If target is provided, run feature engineering to produce `data/processed/train.csv`:

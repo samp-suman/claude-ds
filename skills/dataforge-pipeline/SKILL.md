@@ -90,6 +90,42 @@ python3 ~/.claude/scripts/data_profiler.py \
 
 Auto-detect problem type. Write `dataforge.config.json`.
 
+### Step 2b — Expert Checkpoint: Preprocessing Review
+
+Run domain detection and expert triage:
+
+```bash
+python3 ~/.claude/scripts/domain_detect.py \
+  --data "{OUTPUT_DIR}/data/raw/{filename}" \
+  --profile "{OUTPUT_DIR}/data/interim/profile.json" \
+  --output "{OUTPUT_DIR}/data/interim/expert_cache/domain.json"
+
+python3 ~/.claude/scripts/expert_triage.py \
+  --stage preprocessing \
+  --profile "{OUTPUT_DIR}/data/interim/profile.json" \
+  --validation "{OUTPUT_DIR}/data/interim/validation_report.json" \
+  --cache-dir "{OUTPUT_DIR}/data/interim/expert_cache" \
+  --output "{OUTPUT_DIR}/data/interim/expert_cache/triage_preprocessing.json" \
+  {--production if PRODUCTION_FLAG} {--first-run if no prior experiments}
+```
+
+Read `triage_preprocessing.json`. Based on `complexity_level`:
+
+- **skip**: Log "expert review skipped (low complexity)", continue.
+- **light**: Spawn only `df-expert-lead` with `complexity_level=light` to do a quick review.
+- **full**: Spawn methodology + domain experts in parallel, then lead:
+  ```
+  Spawn in parallel:
+  - Agent(df-expert-datascientist): stage=preprocessing output_dir={OUTPUT_DIR} problem_type={PROBLEM_TYPE} domain={DOMAIN}
+  - Agent(df-expert-statistician): stage=preprocessing output_dir={OUTPUT_DIR} problem_type={PROBLEM_TYPE} domain={DOMAIN}
+  - Agent(df-expert-{DOMAIN}): stage=preprocessing output_dir={OUTPUT_DIR} problem_type={PROBLEM_TYPE}
+    (only if DOMAIN != "general")
+  ```
+  Collect findings. Spawn `df-expert-lead` with all findings.
+
+If lead verdict is **block**: pause pipeline, present blocks to user.
+If lead verdict is **flag** or **approve**: apply auto-corrections, log advisories, continue.
+
 ### Step 3 — Exploratory Data Analysis
 
 Read column list from `profile.json`.
@@ -108,6 +144,24 @@ Agent(df-eda-global): dataset_path={raw_path} target={TARGET_COL} output_dir={OU
 ```
 
 Merge results into `eda_summary.json`. Write `src/data_pipeline.py`.
+
+### Step 3b — Expert Checkpoint: EDA Review
+
+```bash
+python3 ~/.claude/scripts/expert_triage.py \
+  --stage eda \
+  --profile "{OUTPUT_DIR}/data/interim/profile.json" \
+  --eda-summary "{OUTPUT_DIR}/reports/eda/eda_summary.json" \
+  --cache-dir "{OUTPUT_DIR}/data/interim/expert_cache" \
+  --output "{OUTPUT_DIR}/data/interim/expert_cache/triage_eda.json"
+```
+
+Same expert flow as Step 2b: skip / light / full based on `complexity_level`.
+
+For **full**: use `SendMessage` to continue previously spawned methodology and
+domain experts (they already have preprocessing context). Spawn lead fresh.
+
+If lead verdict is **block**: pause for user. Otherwise continue.
 
 ### Step 4 — Feature Engineering
 
@@ -142,6 +196,24 @@ output_dir: {OUTPUT_DIR}
 ```
 
 Write `src/model_training.py` and `src/evaluation.py`.
+
+### Step 6b — Expert Checkpoint: Modeling Review
+
+```bash
+python3 ~/.claude/scripts/expert_triage.py \
+  --stage modeling \
+  --leaderboard "{OUTPUT_DIR}/src/models/leaderboard.json" \
+  --profile "{OUTPUT_DIR}/data/interim/profile.json" \
+  --cache-dir "{OUTPUT_DIR}/data/interim/expert_cache" \
+  --output "{OUTPUT_DIR}/data/interim/expert_cache/triage_modeling.json"
+```
+
+Same expert flow as Step 2b: skip / light / full based on `complexity_level`.
+
+For **full**: use `SendMessage` to continue previously spawned experts. They now
+have full pipeline context (preprocessing + EDA + modeling findings).
+
+If lead verdict is **block**: pause for user. Otherwise continue.
 
 ### Step 7 — Interpret + Visualize (Parallel)
 

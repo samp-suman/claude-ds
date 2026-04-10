@@ -109,6 +109,23 @@ output_dir: {OUTPUT_DIR}
 
 Agent writes `src/models/leaderboard.json` and updates memory.
 
+### Step 5b — Expert Checkpoint: Modeling Review (Optional)
+
+If running as part of a workflow, the workflow handles expert checkpoints.
+When running standalone (`/dataforge-modeling train`), run the checkpoint here:
+
+```bash
+python3 ~/.claude/scripts/expert_triage.py \
+  --stage modeling \
+  --leaderboard "{OUTPUT_DIR}/src/models/leaderboard.json" \
+  --profile "{OUTPUT_DIR}/data/interim/profile.json" \
+  --cache-dir "{OUTPUT_DIR}/data/interim/expert_cache" \
+  --output "{OUTPUT_DIR}/data/interim/expert_cache/triage_modeling.json"
+```
+
+Based on `complexity_level`: skip / light (lead only) / full (all experts + lead).
+If lead verdict is **block**: pause for user. Otherwise continue.
+
 ### Step 6 — Interpret + Visualize (Parallel)
 
 Spawn BOTH simultaneously after evaluation:

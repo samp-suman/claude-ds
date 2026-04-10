@@ -60,10 +60,10 @@ claude-ds/
 │   ├── dataforge-report/     # Atomic: HTML/PDF report generation
 │   ├── dataforge-analysis/   # Workflow: preprocess + EDA + report
 │   └── dataforge-pipeline/   # Workflow: full end-to-end pipeline
-├── agents/                   # Sub-agent definitions (df-*.md)
-├── scripts/                  # Python CLI scripts (all computation)
-├── references/               # Reference docs (loaded on-demand by skills)
-├── schema/                   # JSON schemas for config + memory
+├── agents/                   # 21 agents: 12 execution + 9 expert (df-*.md)
+├── scripts/                  # 16 Python CLI scripts (all computation)
+├── references/               # 12 reference docs (6 general + 6 domain)
+├── schema/                   # 3 JSON schemas (config, memory, expert-output)
 ├── hooks/                    # Pre/Post tool use hooks
 ├── extensions/               # Optional: Kaggle, MLflow
 ├── docs/                     # ARCHITECTURE.md, COMMANDS.md
@@ -82,6 +82,8 @@ claude-ds/
 - Quality gates: exit code 2 = HARD STOP, exit code 1 = warnings, exit code 0 = pass
 - Reference files are loaded on-demand, never all at startup
 - Each SKILL.md must stay under 500 lines
+- Expert agents trigger adaptively via `expert_triage.py` (skip/light/full)
+- Domain auto-detected via `domain_detect.py`; domain experts only spawn when confidence >= 0.5
 
 ## Installation
 

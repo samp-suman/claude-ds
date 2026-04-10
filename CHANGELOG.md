@@ -7,31 +7,57 @@ Format: [Semantic Versioning](https://semver.org/) — `## [version] YYYY-MM-DD`
 
 ## Roadmap
 
-### v0.3.0 — Expert Agent Layer: Methodology Experts
-- `df-expert-datascientist` — Senior DS (10+ yr) reviewing pipeline decisions, model selection, overfitting, bias
-- `df-expert-statistician` — Senior Statistician verifying distributions, hypothesis tests, imputation, leakage
-- Expert review checkpoints between pipeline stages (approve/flag/block verdicts)
-- Expert findings logged to `memory/decisions.md`
-
-### v0.3.1 — Expert Agent Layer: Domain Experts (Healthcare + Finance)
-- Domain auto-detection from column names, filenames, value patterns
-- `df-expert-healthcare` — Clinical feature interpretation, HIPAA, diagnosis thresholds, confounders
-- `df-expert-finance` — Risk scoring, fraud patterns, regulatory features, credit models
-- `--domain <name>` flag for explicit domain selection
-
-### v0.3.2 — Expert Agent Layer: Domain Experts (Marketing + Retail + Social)
-- `df-expert-marketing` — CLV, churn, RFM, attribution, A/B testing, cohort analysis
-- `df-expert-retail` — Demand forecasting, price elasticity, basket analysis, seasonality
-- `df-expert-social` — Engagement metrics, sentiment, network effects, content classification
-
-### v0.3.3 — Expert Agent Layer: MLOps + Manufacturing
-- `df-expert-mlops` — Production readiness, inference latency, monitoring, retraining triggers
-- `df-expert-manufacturing` — Sensor data, predictive maintenance, yield, SPC, anomaly detection
-
 ### v0.4.0 — Expert Consensus Protocol
 - Multiple experts review same output, vote on decisions
 - Conflicts escalated to user with expert rationale from each side
 - Expert confidence scores for recommendations
+
+---
+
+## [0.3.0] 2026-04-10 — Expert Agent Layer
+
+### Added
+
+**Scripts**
+- `scripts/domain_detect.py` — Auto-detect dataset domain from column names, filename patterns, value patterns. 6 domains: healthcare, finance, marketing, retail, social, manufacturing. Falls back to "general" if confidence < 0.5
+- `scripts/expert_triage.py` — Compute complexity score per pipeline stage (preprocessing/eda/modeling), decide expert depth: skip (<0.2), light (0.2-0.5), full (>0.5). Force full if --production, --first-run, or --domain-flag
+
+**Expert Agents (9)**
+- `agents/df-expert-lead.md` — Lead expert: collates all findings, resolves conflicts, applies auto-corrections, returns verdict (approve/flag/block)
+- `agents/df-expert-datascientist.md` — Senior Data Scientist (10+ yr): pipeline review, model selection, overfitting detection, bias analysis
+- `agents/df-expert-statistician.md` — Senior Statistician (10+ yr): distribution assumptions, hypothesis testing, imputation validity, data leakage
+- `agents/df-expert-healthcare.md` — Healthcare domain: clinical features, diagnostic thresholds (HbA1c, BMI, vitals), HIPAA, confounders
+- `agents/df-expert-finance.md` — Finance domain: risk scoring, fraud detection, regulatory compliance, temporal leakage, fair lending
+- `agents/df-expert-marketing.md` — Marketing domain: CLV, churn modeling, RFM segmentation, attribution, A/B test validity
+- `agents/df-expert-retail.md` — Retail domain: demand forecasting, price elasticity, basket analysis, seasonality, stockout handling
+- `agents/df-expert-social.md` — Social media domain: engagement metrics, sentiment analysis, bot detection, network effects
+- `agents/df-expert-manufacturing.md` — Manufacturing domain: sensor data, predictive maintenance, SPC, yield optimization, anomaly detection
+
+**Domain Reference Docs (6)**
+- `references/domain-healthcare.md` — Clinical feature ranges, KPIs, feature engineering recipes, common pitfalls
+- `references/domain-finance.md` — Credit scoring tiers, fraud metrics (KS, Gini), regulatory considerations, temporal validation
+- `references/domain-marketing.md` — RFM framework, churn definition, CLV calculation, cohort analysis, campaign metrics
+- `references/domain-retail.md` — Demand forecasting, price elasticity, basket analysis, inventory signals, seasonality
+- `references/domain-social.md` — Engagement metrics, sentiment analysis, bot detection, virality signals, text preprocessing
+- `references/domain-manufacturing.md` — OEE, SPC (Cpk/Ppk), sensor aggregation, predictive maintenance, Nelson rules
+
+**Schema**
+- `schema/expert-output.json` — JSON Schema for expert finding contract (severity, auto_correctable, correction_action) and lead verdict contract (actions_taken, advisories, blocks)
+
+### Changed
+- `skills/dataforge-pipeline/SKILL.md` — Added 3 expert checkpoints (after preprocessing, EDA, modeling) with triage-based triggering
+- `skills/dataforge-analysis/SKILL.md` — Added 1 expert checkpoint (after EDA)
+- `skills/dataforge-preprocess/SKILL.md` — Added optional expert checkpoint (standalone mode)
+- `skills/dataforge-modeling/SKILL.md` — Added optional expert checkpoint (standalone mode)
+- `docs/ARCHITECTURE.md` — Updated layer diagram with expert layer, added expert system documentation, replaced roadmap
+- `agents/README.md` — Added 9 expert agents to inventory, expert triage flow diagram
+
+### Architecture Decisions
+- Adaptive triage over blanket review — experts only run when complexity warrants it, saving tokens
+- Lead expert spawned fresh each checkpoint to avoid bias accumulation
+- Domain/methodology experts spawned once, continued via SendMessage across stages
+- Domain auto-detection runs once, result cached for all subsequent checkpoints
+- Expert findings cached in `{OUTPUT_DIR}/data/interim/expert_cache/` for cross-stage context
 
 ---
 
