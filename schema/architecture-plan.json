@@ -1,0 +1,227 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DataForge Architecture Plan",
+  "description": "Output of the architect phase. Track-agnostic envelope; chosen_approach is a track-specific struct validated by one of the per-track sub-schemas. Designed in v0.4.0 to forward-cover DL (v0.5) and RAG (v0.6) without schema rewrites.",
+  "type": "object",
+  "required": ["schema_version", "track", "subtype", "chosen_approach", "rationale", "expert_recommendations", "confidence_score"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "default": "1.0"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "track": {
+      "type": "string",
+      "enum": ["tabular", "dl", "rag"]
+    },
+    "subtype": {
+      "type": "string",
+      "description": "Track-specific subtype. tabular: regression|binary_classification|multiclass_classification|clustering|time_series. dl: cv-classification|cv-detection|cv-segmentation|nlp-classification|nlp-seq2seq|timeseries|audio|multimodal. rag: text-rag|multimodal-rag|doc-kb|agentic-rag."
+    },
+    "architect_mode": {
+      "type": "string",
+      "enum": ["ask", "semi", "auto"],
+      "description": "Mode active when this plan was produced"
+    },
+    "chosen_approach": {
+      "description": "Track-specific approach struct. One of the definitions below depending on track.",
+      "oneOf": [
+        {"$ref": "#/definitions/tabular_approach"},
+        {"$ref": "#/definitions/dl_approach"},
+        {"$ref": "#/definitions/rag_approach"}
+      ]
+    },
+    "alternatives_considered": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["approach", "why_not"],
+        "properties": {
+          "approach": {"type": "string"},
+          "why_not": {"type": "string"}
+        }
+      }
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Plain-text consolidated reasoning for the chosen approach"
+    },
+    "expert_recommendations": {
+      "type": "array",
+      "description": "Individual ExpertRecommendation entries from each consulted expert before consolidation",
+      "items": {"$ref": "#/definitions/expert_recommendation"}
+    },
+    "expert_citations": {
+      "type": "array",
+      "description": "KB entries that informed the decision",
+      "items": {
+        "type": "object",
+        "required": ["expert", "kb_entries"],
+        "properties": {
+          "expert": {"type": "string"},
+          "kb_entries": {
+            "type": "array",
+            "items": {"type": "string", "description": "Path-like reference, e.g. 'role/dl-architect/techniques.live.md#lora-r16-bge'"}
+          }
+        }
+      }
+    },
+    "fallback_plan": {
+      "type": "object",
+      "description": "What to try if the primary approach fails",
+      "properties": {
+        "trigger": {"type": "string", "description": "Condition that activates the fallback"},
+        "approach": {"type": "string"}
+      }
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Aggregate expert confidence. >= 0.8 lets 'semi' mode auto-proceed."
+    },
+    "complexity_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Estimated implementation complexity, used to budget compute and surface warnings"
+    },
+    "kb_freshness": {
+      "type": "object",
+      "description": "Snapshot of KB freshness at decision time",
+      "properties": {
+        "all_fresh": {"type": "boolean"},
+        "stale_areas": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  },
+  "definitions": {
+    "expert_recommendation": {
+      "type": "object",
+      "required": ["expert", "proposed_approach", "rationale", "confidence"],
+      "properties": {
+        "expert": {"type": "string", "description": "Agent name (e.g., df-expert-mle)"},
+        "role": {"type": "string"},
+        "proposed_approach": {
+          "description": "Track-specific approach struct (same shape as chosen_approach)"
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "rationale": {"type": "string"},
+        "kb_citations": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "tabular_approach": {
+      "type": "object",
+      "description": "Tabular track approach (v0.4.0)",
+      "properties": {
+        "model_family_shortlist": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "e.g., ['xgboost', 'lightgbm', 'catboost', 'random_forest', 'ridge', 'logistic']"
+        },
+        "preprocessing_strategy": {
+          "type": "object",
+          "properties": {
+            "imputation": {"type": "string"},
+            "encoding": {"type": "string"},
+            "scaling": {"type": "string"},
+            "outlier_handling": {"type": "string"}
+          }
+        },
+        "feature_engineering_strategy": {
+          "type": "object",
+          "properties": {
+            "interactions": {"type": "boolean"},
+            "polynomial_terms": {"type": "boolean"},
+            "target_encoding": {"type": "boolean"},
+            "domain_features": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "metric": {"type": "string"},
+        "cv_strategy": {
+          "type": "object",
+          "properties": {
+            "scheme": {"type": "string", "description": "kfold|stratified|timeseries|group"},
+            "n_splits": {"type": "integer"}
+          }
+        },
+        "hpo_budget": {
+          "type": "object",
+          "properties": {
+            "method": {"type": "string", "description": "none|random|optuna"},
+            "n_trials": {"type": "integer"},
+            "timeout_minutes": {"type": "integer"}
+          }
+        }
+      }
+    },
+    "dl_approach": {
+      "type": "object",
+      "description": "Deep Learning track approach (skeleton in v0.4, populated in v0.5)",
+      "properties": {
+        "subtype": {"type": "string", "description": "cv|nlp|timeseries|audio|multimodal"},
+        "backbone": {"type": "string"},
+        "head": {"type": "string"},
+        "training_mode": {"type": "string", "description": "from_scratch|finetune|lora|qlora|linear_probe"},
+        "lora_config": {
+          "type": "object",
+          "properties": {
+            "r": {"type": "integer"},
+            "alpha": {"type": "integer"},
+            "target_modules": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "optimizer": {"type": "string"},
+        "scheduler": {"type": "string"},
+        "augmentations": {"type": "array", "items": {"type": "string"}},
+        "batch_size": {"type": "integer"},
+        "epochs": {"type": "integer"},
+        "mixed_precision": {"type": "string", "description": "no|fp16|bf16"},
+        "distributed_strategy": {"type": "string"},
+        "metric": {"type": "string"}
+      }
+    },
+    "rag_approach": {
+      "type": "object",
+      "description": "RAG track approach (skeleton in v0.4, populated in v0.6)",
+      "properties": {
+        "subtype": {"type": "string", "description": "text|multimodal|doc-kb|agentic"},
+        "chunking_strategy": {
+          "type": "object",
+          "properties": {
+            "method": {"type": "string", "description": "fixed|recursive|semantic|sentence"},
+            "chunk_size": {"type": "integer"},
+            "overlap": {"type": "integer"}
+          }
+        },
+        "embedding_model": {"type": "string"},
+        "index_type": {"type": "string", "description": "flat|hnsw|ivf|hybrid"},
+        "vector_store": {"type": "string"},
+        "retrieval_strategy": {"type": "string", "description": "dense|sparse|hybrid|graph"},
+        "reranker": {"type": "string"},
+        "top_k": {"type": "integer"},
+        "prompt_template": {"type": "string"},
+        "generation_model": {"type": "string"},
+        "eval_suite": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Ragas / custom metric names"
+        }
+      }
+    }
+  }
+}

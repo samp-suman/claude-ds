@@ -7,10 +7,39 @@ Format: [Semantic Versioning](https://semver.org/) — `## [version] YYYY-MM-DD`
 
 ## Roadmap
 
-### v0.4.0 — Expert Consensus Protocol
-- Multiple experts review same output, vote on decisions
-- Conflicts escalated to user with expert rationale from each side
-- Expert confidence scores for recommendations
+### v0.4.0 — Continuous Learning + Foundational Fixes + Multi-Track Foundation (in progress)
+- Knowledge base subsystem with researcher agents, refresh hooks, setup wizard
+- Architect phase with expert recommendations and ask/semi/auto modes
+- Pipeline-based DS-process discipline (fitted sklearn Pipelines, no train/serve skew)
+- LEARNINGS.md fixes: post-FE leakage gate, model-specific preprocessing, held-out test set
+- Three-track architecture (tabular implemented; dl/rag skeletons for v0.5/v0.6)
+
+---
+
+## [0.4.0-alpha] in progress — Multi-Track Foundation
+
+### Added (forward-compat foundation)
+
+**Schemas**
+- `schema/sources.json` — knowledge-source whitelist with TTL, tier, fetch state
+- `schema/architecture-plan.json` — track-agnostic architect-phase output (tabular/dl/rag oneOf)
+- `schema/knowledge-entry.json` — researcher-output knowledge unit with kind/tier/track
+- `schema/project-config.json` — added `project_type`, `project_subtype`, `architect_mode`, `knowledge_snapshot_path/version`, `primary_metric_user_chosen`, `architecture_plan_path`, `test_split`, `pipeline_artifacts`; new pipeline_status flags (`architect`, `test_split`, `pipeline_fit`)
+
+**Scripts**
+- `scripts/project_type_detect.py` — track + subtype detection from input path signals (tabular/dl/rag); ships in v0.4.0 so v0.5/v0.6 don't retrofit detection
+- `scripts/seed_kb.py` — modular KB seeder; copies `references/seed-knowledge/` into `~/.claude/dataforge/knowledge/` as `*.live.md`; supports `--force`, `--dry-run`; updates `meta.json` per area
+
+**Knowledge Base skeleton** (`~/.claude/dataforge/knowledge/`)
+- Track-aware layout: `libraries/{tabular,dl,rag,common}`, `track/{tabular,dl,rag}`, `domain/`, `role/`, `shared/`
+- `meta.json`, `sources.json`, `index.md`, `shared/cross-cutting.md`
+- Empty `track/dl/{cv,nlp,timeseries,audio,multimodal}` and `track/rag/{text,multimodal,doc-kb,agentic}` namespaces reserved for v0.5/v0.6
+
+**Seed knowledge** (`references/seed-knowledge/`) — 21 baseline files ready to refresh
+- 7 domains: real-estate, finance, healthcare, retail, marketing, manufacturing, social
+- 6 active roles: data-scientist, ml-engineer, data-engineer, mlops, statistician, ai-researcher
+- 8 tabular libraries: sklearn, xgboost, lightgbm, catboost, polars, pandas, optuna, shap
+- Every seed file has frontmatter (`area`, `seeded_at`, `refresh_command`, `applies_to_versions`) so researcher agents can update modularly
 
 ---
 

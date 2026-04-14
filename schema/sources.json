@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DataForge Knowledge Sources Schema",
+  "description": "Whitelist of knowledge sources fetched by researcher agents, with TTL and fetch-state tracking. Lives at ~/.claude/dataforge/knowledge/sources.json (live) and seeded from references/seed-sources/.",
+  "type": "object",
+  "required": ["schema_version", "sources"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "default": "1.0"
+    },
+    "last_global_refresh": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent /dataforge-learn all run"
+    },
+    "sources": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/source"}
+    }
+  },
+  "definitions": {
+    "source": {
+      "type": "object",
+      "required": ["id", "url", "category", "area", "tier", "ttl_days"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable unique identifier (e.g., 'sklearn-changelog', 'karpathy-blog')"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["library", "domain", "role", "research", "hackathon", "user"],
+          "description": "What kind of knowledge this source contributes"
+        },
+        "area": {
+          "type": "string",
+          "description": "The specific area this source feeds (library name, domain name, role name). Must match a KB namespace, e.g. 'sklearn', 'finance', 'ml-engineer'."
+        },
+        "track": {
+          "type": "string",
+          "enum": ["tabular", "dl", "rag", "common"],
+          "description": "Which execution track this source is relevant to. 'common' applies everywhere.",
+          "default": "common"
+        },
+        "tier": {
+          "type": "string",
+          "enum": ["official", "research", "blog", "hackathon", "user"],
+          "description": "Trust tier. official = library docs/changelogs; research = arxiv/papers-with-code/distill; blog = thought leaders + big-tech eng; hackathon = Kaggle/Numerai writeups; user = runtime-provided URL."
+        },
+        "ttl_days": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Refresh interval for this source. Defaults: library=7, research=14, domain=30, role=30."
+        },
+        "last_fetched": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "last_hash": {
+          "type": ["string", "null"],
+          "description": "Content hash of the last successful fetch, for change detection"
+        },
+        "last_status": {
+          "type": "string",
+          "enum": ["ok", "stale", "failed", "never"],
+          "default": "never"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Setup wizard can disable individual sources"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional human-readable reason for including this source"
+        }
+      }
+    }
+  }
+}

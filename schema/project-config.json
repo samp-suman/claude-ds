@@ -8,11 +8,61 @@
     "schema_version": {
       "type": "string",
       "description": "Config schema version",
-      "default": "1.0"
+      "default": "1.1"
     },
     "project_name": {
       "type": "string",
       "description": "Project name (derived from dataset filename)"
+    },
+    "project_type": {
+      "type": "string",
+      "enum": ["tabular", "dl", "rag"],
+      "description": "Top-level execution track. Only 'tabular' is implemented in v0.4.0; 'dl' and 'rag' are forward-compatible stubs.",
+      "default": "tabular"
+    },
+    "project_subtype": {
+      "type": "string",
+      "description": "Track-specific subtype. tabular: regression|binary_classification|multiclass_classification|clustering|time_series. dl: cv-classification|cv-detection|cv-segmentation|nlp-classification|nlp-seq2seq|timeseries|audio|multimodal. rag: text-rag|multimodal-rag|doc-kb|agentic-rag."
+    },
+    "architect_mode": {
+      "type": "string",
+      "enum": ["ask", "semi", "auto"],
+      "description": "How the architect phase surfaces its plan. ask = AskUserQuestion gate; semi = auto-proceed when confidence >= 0.8 and KB fresh, else ask; auto = always auto-proceed.",
+      "default": "ask"
+    },
+    "knowledge_snapshot_path": {
+      "type": "string",
+      "description": "Relative path to the per-project knowledge snapshot directory (typically 'knowledge/'). Contains the KB slices used at project start for reproducibility."
+    },
+    "knowledge_snapshot_version": {
+      "type": "string",
+      "description": "Version/timestamp of the global KB state captured into this project snapshot"
+    },
+    "primary_metric_user_chosen": {
+      "type": "string",
+      "description": "Primary metric selected by the user during preprocessing Step 0 (overrides problem-type default)"
+    },
+    "architecture_plan_path": {
+      "type": "string",
+      "description": "Relative path to architecture_plan.json written by the architect phase"
+    },
+    "test_split": {
+      "type": "object",
+      "description": "Held-out test set metadata (created BEFORE any transformer fit)",
+      "properties": {
+        "path": {"type": "string", "description": "Relative path to test.csv"},
+        "row_hash": {"type": "string", "description": "Hash of the test row set for reproducibility"},
+        "n_rows": {"type": "integer"},
+        "stratified_on": {"type": "string"}
+      }
+    },
+    "pipeline_artifacts": {
+      "type": "object",
+      "description": "Per-family fitted sklearn Pipeline pickles (tabular track)",
+      "properties": {
+        "tree_pipeline_path": {"type": "string"},
+        "linear_pipeline_path": {"type": "string"}
+      }
     },
     "created_at": {
       "type": "string",
@@ -77,7 +127,10 @@
         "interpret": {"type": "boolean", "default": false},
         "visualize": {"type": "boolean", "default": false},
         "deploy": {"type": "boolean", "default": false},
-        "report": {"type": "boolean", "default": false}
+        "report": {"type": "boolean", "default": false},
+        "architect": {"type": "boolean", "default": false},
+        "test_split": {"type": "boolean", "default": false},
+        "pipeline_fit": {"type": "boolean", "default": false}
       }
     }
   }

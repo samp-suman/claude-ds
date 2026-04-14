@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DataForge Knowledge Entry",
+  "description": "Structured knowledge unit produced by researcher agents (df-researcher-library, df-researcher-domain, df-researcher-role) and merged into the live KB. Multiple entries make up a *.live.md file in ~/.claude/dataforge/knowledge/.",
+  "type": "object",
+  "required": ["schema_version", "id", "title", "summary", "source_url", "tier", "added_date", "area", "category"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "default": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "description": "Stable id for dedupe and citation, e.g. 'sklearn-1.5-set_output-pandas'"
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string",
+      "description": "1-3 sentences describing the technique, API change, or insight"
+    },
+    "body": {
+      "type": "string",
+      "description": "Optional longer explanation in markdown"
+    },
+    "code_example": {
+      "type": "string",
+      "description": "Optional minimal runnable code snippet"
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "source_id": {
+      "type": "string",
+      "description": "Matches sources.json id"
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["official", "research", "blog", "hackathon", "user"]
+    },
+    "category": {
+      "type": "string",
+      "enum": ["library", "domain", "role", "research", "hackathon", "user"]
+    },
+    "area": {
+      "type": "string",
+      "description": "KB namespace this entry belongs to (e.g., 'sklearn', 'finance', 'ml-engineer')"
+    },
+    "track": {
+      "type": "string",
+      "enum": ["tabular", "dl", "rag", "common"],
+      "default": "common"
+    },
+    "added_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional explicit expiry; otherwise the area's TTL applies"
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["new_api", "deprecation", "best_practice", "pitfall", "technique", "benchmark", "case_study"],
+      "description": "Type of knowledge — used by the merge step to surface deprecations and pitfalls in the freshness gate"
+    },
+    "deprecation_replaces": {
+      "type": "string",
+      "description": "If kind=deprecation, the symbol/API that this replaces. Used by pre-codegen-freshness hook."
+    },
+    "applies_to_versions": {
+      "type": "string",
+      "description": "Library version range this entry applies to (e.g., '>=1.5,<2.0')"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}
