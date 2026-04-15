@@ -28,7 +28,25 @@ Format: [Semantic Versioning](https://semver.org/) — `## [version] YYYY-MM-DD`
 
 **Scripts**
 - `scripts/project_type_detect.py` — track + subtype detection from input path signals (tabular/dl/rag); ships in v0.4.0 so v0.5/v0.6 don't retrofit detection
-- `scripts/seed_kb.py` — modular KB seeder; copies `references/seed-knowledge/` into `~/.claude/dataforge/knowledge/` as `*.live.md`; supports `--force`, `--dry-run`; updates `meta.json` per area
+- `scripts/seed_kb.py` — modular KB seeder; copies `references/seed-knowledge/` into `~/.claude/dataforge/knowledge/` as `*.live.md`; supports `--force`, `--dry-run`; updates `meta.json` per area. Fixed: library area key now resolves to file stem (e.g. `sklearn`) instead of collapsing every library under `tabular`.
+- `scripts/seed_sources.py` — parses `references/seed-sources/**/*.md` and populates `~/.claude/dataforge/knowledge/sources.json` with the whitelist; idempotent, preserves runtime state fields
+- `scripts/learn_orchestrator.py` — backend for `/dataforge-learn`. `plan` subcommand reads `meta.json` + `sources.json` + config, computes stale areas, emits spawn manifest in parallel waves (<=10 per wave). `status` subcommand reports per-area freshness
+- `scripts/merge_knowledge.py` — post-researcher merge: walks every `*.live.md`, parses embedded `json knowledge-entry` fenced blocks, dedupes by id, extracts cross-cutting entries to `shared/cross-cutting.md`, rebuilds `index.md`, patches `meta.json` (`last_refreshed_at`, `entry_count`, `source: researcher`) and `sources.json` (`last_fetched`, `last_hash`, `last_status`) atomically
+- `scripts/knowledge_query.py` — read-only backend for `/dataforge-knowledge`: `show <area>`, `search <query>`, `status`, `diff`
+
+**Researcher Agents (3)**
+- `agents/df-researcher-library.md` — fetches library changelogs/whatsnew pages, extracts knowledge-entry items, writes to `libraries/<track>/<lib>.live.md`; supports optional WebSearch fallback
+- `agents/df-researcher-domain.md` — fetches domain research/case studies, writes to `domain/<name>/techniques.live.md`
+- `agents/df-researcher-role.md` — fetches thought-leader content per role, writes to `role/<name>/techniques.live.md`
+
+**Skills (2)**
+- `skills/dataforge-learn/SKILL.md` — `/dataforge-learn [all|library|domain|role] [--area <name>] [--source <url>] [--web-search] [--force]`: calls orchestrator, spawns researchers in parallel waves, calls merge, prints summary
+- `skills/dataforge-knowledge/SKILL.md` — `/dataforge-knowledge [show|search|status|diff] [area|query]`: read-only wrapper around `knowledge_query.py`
+
+**Seed sources** (`references/seed-sources/`)
+- `libraries/tabular.md` — 8 libraries, 16 URLs (sklearn, xgboost, lightgbm, catboost, polars, pandas, optuna, shap)
+- `domain/domains.md` — 7 domains, 14 URLs
+- `role/roles.md` — 6 roles, 18 URLs
 
 **Knowledge Base skeleton** (`~/.claude/dataforge/knowledge/`)
 - Track-aware layout: `libraries/{tabular,dl,rag,common}`, `track/{tabular,dl,rag}`, `domain/`, `role/`, `shared/`

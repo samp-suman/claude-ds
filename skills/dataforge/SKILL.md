@@ -38,6 +38,8 @@ allowed-tools:
 | `/dataforge status <project-dir>` | `dataforge-experiment` | Print memory: experiments, decisions, best pipeline |
 | `/dataforge resume <project-dir>` | `dataforge-pipeline` | Resume interrupted pipeline from last checkpoint |
 | `/dataforge monitor <dir> --new-data <path>` | `dataforge-experiment` | Data/concept drift detection |
+| `/dataforge learn [scope] [flags]` | `dataforge-learn` | Refresh the live knowledge base from whitelisted sources |
+| `/dataforge knowledge [subcommand]` | `dataforge-knowledge` | Inspect / search / diff the live knowledge base (read-only) |
 | `/dataforge compare <project-dir>` | `dataforge-experiment` | Compare experiments across runs |
 
 ---

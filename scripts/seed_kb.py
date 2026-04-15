@@ -80,8 +80,16 @@ def _update_meta(target_root: Path, copied: list) -> None:
         category = parts[0]  # libraries|track|domain|role|shared
         if category not in meta["areas"]:
             meta["areas"][category] = {}
-        # area key: subpath after category, joined by "/"
-        area_key = "/".join(parts[1:-1]) or parts[-1].replace(".live.md", "")
+        # Area key is the file stem (e.g. `sklearn` for libraries/tabular/sklearn.live.md)
+        # for libraries, and the parent directory (e.g. `finance` for
+        # domain/finance/techniques.live.md) for domain/role where files share a name.
+        stem = parts[-1].replace(".live.md", "")
+        if category == "libraries":
+            area_key = stem
+        elif category in ("domain", "role") and len(parts) >= 3:
+            area_key = parts[1]
+        else:
+            area_key = "/".join(parts[1:-1]) or stem
         meta["areas"][category][area_key] = {
             "seeded_at": now,
             "last_refreshed_at": None,

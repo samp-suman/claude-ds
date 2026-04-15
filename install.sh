@@ -16,9 +16,12 @@ if [[ "$1" == "--uninstall" ]]; then
   # Remove skills
   for skill_dir in dataforge dataforge-preprocess dataforge-eda dataforge-modeling \
                    dataforge-experiment dataforge-deploy dataforge-report \
-                   dataforge-analysis dataforge-pipeline; do
+                   dataforge-analysis dataforge-pipeline \
+                   dataforge-learn dataforge-knowledge; do
     rm -rf "$CLAUDE_DIR/skills/$skill_dir"
   done
+  # Preserve ~/.claude/dataforge/ (live knowledge base + config) across reinstalls.
+  echo "Note: ~/.claude/dataforge/ preserved (live KB + config). Delete manually if needed."
   # Remove agents (only df-* to not touch other agents)
   rm -f "$CLAUDE_DIR/agents/"df-*.md
   # Remove shared resources
@@ -67,6 +70,11 @@ chmod +x "$CLAUDE_DIR/scripts/"*.py 2>/dev/null || true
 chmod +x "$CLAUDE_DIR/hooks/"*.py 2>/dev/null || true
 chmod +x "$CLAUDE_DIR/hooks/"*.sh 2>/dev/null || true
 
+# Bootstrap knowledge base (idempotent; preserves live KB across reinstalls)
+mkdir -p "$CLAUDE_DIR/dataforge/knowledge"
+python3 "$CLAUDE_DIR/scripts/seed_kb.py" --quiet || echo "(seed_kb.py skipped)"
+python3 "$CLAUDE_DIR/scripts/seed_sources.py" >/dev/null || echo "(seed_sources.py skipped)"
+
 echo ""
 echo "DataForge installed successfully!"
 echo ""
@@ -90,3 +98,7 @@ echo "     /dataforge analyze <dataset.csv>"
 echo "     /dataforge eda <dataset.csv>"
 echo "     /dataforge-preprocess features <dataset.csv> <target>"
 echo "     /dataforge-modeling train <dataset.csv> <target>"
+echo ""
+echo "  4. Refresh the knowledge base from whitelisted sources:"
+echo "     /dataforge-learn all"
+echo "     /dataforge-knowledge status"

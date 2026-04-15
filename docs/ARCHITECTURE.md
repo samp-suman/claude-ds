@@ -1,305 +1,379 @@
 # DataForge Architecture
 
+> Updated for **v0.4.0** — multi-track foundation, knowledge base, architect phase,
+> and pipeline-based DS-process discipline.
+
 ## Overview
 
-DataForge is a Claude Code plugin that transforms raw datasets into complete,
-production-grade Data Science projects. It follows a modular **skill + workflow**
-architecture inspired by [claude-seo](https://github.com/AgriciDaniel/claude-seo).
+DataForge is a Claude Code plugin that turns a dataset into a complete,
+production-grade Data Science project. It is organized as a stack of layers:
 
-## Design Principles
+1. A **router** that picks an execution track from the input.
+2. A **knowledge base** that researcher agents keep current.
+3. An **architect phase** where role and domain experts decide the approach.
+4. A **track-specific pipeline** that executes the plan with parallel agents.
+5. **Hooks** that enforce correctness invariants the model can't talk its way out of.
+6. **Memory** that persists per-project state for resume and reproducibility.
 
-1. **Modular skills**: Each DS step (preprocessing, EDA, modeling, etc.) is an
-   independently invocable skill with its own SKILL.md
-2. **Composable workflows**: Workflows orchestrate skills in sequence without
-   duplicating logic
-3. **Parallel execution**: Column-level and model-level operations run in parallel
-   via Claude Code's Agent tool
-4. **Shared scripts**: All computation lives in standalone Python CLI tools that
-   skills and agents invoke
-5. **Quality gates**: Validation must pass before training can begin
-6. **Memory persistence**: Experiment history persists in the generated project folder
-
-## Layer Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│  USER                                               │
-│  /dataforge run titanic.csv Survived                │
-└───────────────────┬─────────────────────────────────┘
-                    ▼
-┌─────────────────────────────────────────────────────┐
-│  ROUTER: skills/dataforge/SKILL.md                  │
-│  Parses command, delegates to skill/workflow         │
-└───────────────────┬─────────────────────────────────┘
-                    ▼
-┌─────────────────────────────────────────────────────┐
-│  WORKFLOWS                                          │
-│  dataforge-pipeline  (full end-to-end)              │
-│  dataforge-analysis  (EDA without modeling)          │
-│  Orchestrate skills in sequence                     │
-└───────────────────┬─────────────────────────────────┘
-                    ▼
-┌─────────────────────────────────────────────────────┐
-│  EXPERT AGENTS (review + verify + guide) [v0.3.0]   │
-│                                                     │
-│  Methodology:        Domain (auto-detected):        │
-│  df-expert-ds        df-expert-healthcare           │
-│  df-expert-stats     df-expert-finance              │
-│                      df-expert-marketing            │
-│  Lead:               df-expert-retail               │
-│  df-expert-lead      df-expert-social               │
-│  (collates + acts)   df-expert-manufacturing        │
-│                                                     │
-│  Triage: expert_triage.py → skip/light/full         │
-│  Domain: domain_detect.py → auto-detect domain      │
-└───────────────────┬─────────────────────────────────┘
-                    ▼
-┌─────────────────────────────────────────────────────┐
-│  SKILLS (atomic, independently invocable)           │
-│  dataforge-preprocess  │  dataforge-eda             │
-│  dataforge-modeling    │  dataforge-experiment       │
-│  dataforge-deploy      │  dataforge-report           │
-│  Each skill spawns agents for parallel work         │
-└───────────────────┬─────────────────────────────────┘
-                    ▼
-┌─────────────────────────────────────────────────────┐
-│  AGENTS (parallel execution units)                  │
-│  df-eda-column (N parallel)  │  df-train-model (N)  │
-│  df-feature-column (N)       │  df-interpret         │
-│  df-validate  │  df-evaluate │  df-visualize         │
-│  df-deploy    │  df-report   │  df-monitor           │
-│  Each agent calls Python scripts                    │
-└───────────────────┬─────────────────────────────────┘
-                    ▼
-┌─────────────────────────────────────────────────────┐
-│  SCRIPTS (Python CLI tools)                         │
-│  ingest.py  │  validate.py  │  data_profiler.py     │
-│  eda.py     │  features.py  │  train.py             │
-│  evaluate.py│  interpret.py │  visualize.py          │
-│  deploy_detect.py │  report.py │  memory_*.py        │
-│  domain_detect.py │  expert_triage.py               │
-│  Standalone, JSON output, exit codes 0/1/2          │
-└─────────────────────────────────────────────────────┘
-```
-
-## Installation Layout
-
-Development repo (`claude-ds/`) installs to `~/.claude/`:
-
-```
-~/.claude/
-├── skills/
-│   ├── dataforge/SKILL.md              # Router
-│   ├── dataforge-preprocess/SKILL.md   # Atomic skill
-│   ├── dataforge-eda/SKILL.md          # Atomic skill
-│   ├── dataforge-modeling/SKILL.md     # Atomic skill
-│   ├── dataforge-experiment/SKILL.md   # Atomic skill
-│   ├── dataforge-deploy/SKILL.md       # Atomic skill
-│   ├── dataforge-report/SKILL.md       # Atomic skill
-│   ├── dataforge-analysis/SKILL.md     # Workflow
-│   └── dataforge-pipeline/SKILL.md     # Workflow
-├── agents/df-*.md                      # 21 sub-agents (12 execution + 9 expert)
-├── scripts/*.py                        # 16 Python scripts
-├── references/*.md                     # 12 reference docs (6 general + 6 domain)
-├── schema/*.json                       # 3 JSON schemas
-└── hooks/*                             # 2 hooks
-```
-
-## Data Flow
-
-```
-Raw Dataset
-    │
-    ▼
-INGEST (ingest.py) ──► data/raw/{file}
-    │
-    ▼
-VALIDATE (validate.py) ──► validation_report.json + .validation_passed
-    │ (GATE: exit_code 2 = STOP)
-    ▼
-PROFILE (data_profiler.py) ──► profile.json + dataforge.config.json
-    │
-    ▼
-DOMAIN DETECT (domain_detect.py) ──► expert_cache/domain.json
-    │
-    ▼
-EXPERT CHECKPOINT 1 (triage → experts → lead) ──► preprocessing review
-    │ (block = pause for user)
-    ▼
-EDA (eda.py, parallel) ──► reports/eda/{col}_stats.json + {col}_plot.png
-    │                       eda_summary.json + correlation_heatmap.png
-    ▼
-EXPERT CHECKPOINT 2 (triage → experts → lead) ──► EDA review
-    │
-    ▼
-FEATURES (features.py, parallel) ──► data/processed/train.csv
-    │
-    ▼
-TRAIN (train.py, ALL parallel) ──► src/models/{model}.pkl + {model}_metrics.json
-    │
-    ▼
-EVALUATE (evaluate.py) ──► src/models/leaderboard.json
-    │
-    ▼
-EXPERT CHECKPOINT 3 (triage → experts → lead) ──► modeling review
-    │
-    ├──► INTERPRET (interpret.py) ──► shap_summary.png, shap_bar.png
-    │                                  (parallel)
-    └──► VISUALIZE (visualize.py) ──► confusion_matrix.png, roc_curve.png
-    │
-    ▼
-DEPLOY (deploy_detect.py + df-deploy) ──► app/app.py + Dockerfile
-    │
-    ▼
-REPORT (report.py) ──► reports/final_report.html
-```
-
-## Parallel Execution Strategy
-
-| Stage | Parallelism | Batch Size |
-|-------|------------|------------|
-| EDA | One agent per column | <= 10 per batch |
-| Feature engineering | One agent per column | <= 10 per batch |
-| **Model training** | **All models at once** | **Single batch** |
-| Interpret + Visualize | Both simultaneously | 2 agents |
-| **Expert review (full)** | **Methodology + domain parallel, then lead** | **2-3 experts + lead** |
-
-## Quality Gate System
-
-Validation runs before any modeling. Hard stops (exit code 2) halt the pipeline:
-
-| Check | Threshold | Action |
-|-------|-----------|--------|
-| Minimum rows | < 50 | HARD STOP |
-| Target missing | Not found | HARD STOP |
-| Target variance | 1 unique value | HARD STOP |
-| Target leakage | Correlation >= 0.99 | HARD STOP |
-| Class imbalance | > 10:1 | Warning, set balanced weights |
-| High missing | > 50% per column | Warning, impute |
-| Duplicates | > 5% | Warning, deduplicate |
-
-## Hooks
-
-| Hook | Trigger | Purpose |
-|------|---------|---------|
-| `post-generate-lint.py` | After Write/Edit of .py file | pyflakes check on generated code |
-| `pre-train-validate.sh` | Before Bash with train.py | Blocks training if validation not passed |
-
-## Memory System
-
-Each generated project persists memory in `memory/`:
-
-| File | Purpose |
-|------|---------|
-| `experiments.json` | Run history (configs, metrics, artifact paths) |
-| `best_pipelines.json` | Winning configurations (seeds future runs) |
-| `failed_transforms.json` | Transforms/models that failed (avoid repeating) |
-| `decisions.md` | Human-readable log of why choices were made |
-
-## Extension Points
-
-| Extension | Location | Purpose |
-|-----------|----------|---------|
-| Kaggle | `extensions/kaggle/` | Download datasets via Kaggle API |
-| MLflow | `extensions/mlflow/` | Log experiments to MLflow server |
-
-## Key Design Decisions
-
-1. **Flat skill directories** -- Claude Code discovers skills by scanning
-   `skills/*/SKILL.md`, so each skill is a peer directory
-2. **Scripts are standalone** -- No imports between scripts; each is a CLI tool
-   with `--arg` interface and JSON stdout
-3. **Agents are shared** -- All agents live in `agents/` and are reused across
-   skills (e.g., `df-report` used by both report skill and pipeline workflow)
-4. **Workflows don't duplicate** -- Workflows call skills by name, never
-   re-implement skill logic
-5. **Memory in project** -- No external DB; all state lives in the generated
-   project's `memory/` directory
+v0.4.0 is the foundation release: tabular is fully populated; deep-learning and
+RAG tracks ship as skeletons so v0.5/v0.6 are additions, not rewrites.
 
 ---
 
-## Expert Agent Layer (v0.3.0)
+## Design principles
 
-DataForge includes an expert review layer that acts as senior practitioners
-reviewing, auto-correcting, and guiding pipeline decisions.
+1. **Modular skills.** Each DS step lives in its own `skills/<name>/SKILL.md`.
+   Skills are independently invocable and stay under 500 lines.
+2. **Composable workflows.** Workflows orchestrate skills in sequence; they
+   never re-implement skill logic.
+3. **Parallel by default.** Per-column work, per-model training, and per-area
+   research all run as N invocations of one agent type in a single message.
+4. **Filesystem as bus.** Researchers, experts, and execution agents communicate
+   via files (KB entries, sentinels, `expert_cache/`, `memory/`). No locks, no IPC.
+5. **Standalone scripts.** All real computation lives in `scripts/*.py` CLI tools
+   that don't import each other. Skills and agents call them via Bash.
+6. **Hooks enforce, not hope.** Test holdout, pipeline fit, leakage gate, and
+   deploy-app correctness are all enforced by `PreToolUse` / `UserPromptSubmit`
+   hooks — the LLM cannot skip them.
+7. **Forward-compatible from day one.** Every v0.4.0 schema and contract is
+   designed to cover DL and RAG without rewrites.
+8. **Loader precedence.** Project snapshot > live KB > seed fallback. Live KB
+   extends seeds, never replaces them, so DataForge works even with an empty KB.
 
-### Expert Types
+---
 
-**Methodology Experts** (verify techniques):
-
-| Agent | Role | Expertise |
-|-------|------|-----------|
-| `df-expert-datascientist` | Senior DS (10+ yr) | Pipeline review, model selection, overfitting, bias |
-| `df-expert-statistician` | Senior Statistician (10+ yr) | Distributions, tests, assumptions, leakage |
-
-**Domain Experts** (understand business context, auto-detected):
-
-| Agent | Domain | Knowledge |
-|-------|--------|-----------|
-| `df-expert-healthcare` | Healthcare/Clinical | Clinical thresholds, HIPAA, confounders, survival analysis |
-| `df-expert-finance` | Banking/Fintech | Risk scoring, fraud, regulatory, temporal leakage, fair lending |
-| `df-expert-marketing` | Marketing/CRM | CLV, churn, RFM, attribution, A/B testing, cohort analysis |
-| `df-expert-retail` | Retail/E-commerce | Demand forecasting, price elasticity, basket analysis, seasonality |
-| `df-expert-social` | Social Media/NLP | Engagement, sentiment, network effects, bot detection |
-| `df-expert-manufacturing` | IoT/Manufacturing | Sensor data, predictive maintenance, SPC, yield optimization |
-
-**Lead Expert** (collates findings, makes final call):
-
-| Agent | Role |
-|-------|------|
-| `df-expert-lead` | Collates all expert findings, applies auto-corrections, returns verdict |
-
-### Adaptive Expert Triage
-
-Experts trigger based on data complexity, not blindly at every stage:
+## Layered architecture
 
 ```
-Stage completes → expert_triage.py (complexity score)
-  ├── score < 0.2:  skip (no experts, 0 token cost)
-  ├── score 0.2-0.5: light (lead expert only, ~1 agent call)
-  └── score > 0.5:  full (methodology + domain + lead, ~3-4 agent calls)
-
-Always full if: --production, first run, or --domain flag set
+┌─────────────────────────────────────────────────────────────┐
+│  USER                                                       │
+│  /dataforge run titanic.csv Survived                        │
+└─────────────────────────────┬───────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  ROUTER (skills/dataforge/SKILL.md)                         │
+│  + project_type_detect.py  ->  tabular | dl | rag           │
+└─────────────────────────────┬───────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  TRACK ENTRY                                                │
+│  dataforge-tabular  (v0.4 implemented)                      │
+│  dataforge-dl       (v0.5 stub)                             │
+│  dataforge-rag      (v0.6 stub)                             │
+└─────────────────────────────┬───────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  KNOWLEDGE REFRESH (hook + skill)                           │
+│  pre-pipeline-refresh.py checks meta.json TTLs              │
+│  /dataforge-learn spawns:                                   │
+│    df-researcher-library  x N  (parallel)                   │
+│    df-researcher-domain   x N  (parallel)                   │
+│    df-researcher-role     x N  (parallel)                   │
+│  merge_knowledge.py rebuilds index + cross-cutting insights │
+│  Writes to ~/.claude/dataforge/knowledge/                   │
+└─────────────────────────────┬───────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  ARCHITECT PHASE (dataforge-architect)                      │
+│  Spawns expert agents in parallel:                          │
+│    df-expert-datascientist   df-expert-mle                  │
+│    df-expert-statistician    df-expert-dataeng              │
+│    df-expert-airesearcher    df-expert-mlops                │
+│    df-expert-<domain>  (auto-detected)                      │
+│  Each reads its KB slice, returns ExpertRecommendation      │
+│  df-expert-lead consolidates -> architecture_plan.json      │
+│  Mode gate: ask | semi (conf>=0.8) | auto                   │
+└─────────────────────────────┬───────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  TABULAR PIPELINE (dataforge-pipeline)                      │
+│                                                             │
+│  ingest -> raw validate -> STRATIFIED HOLDOUT (sentinel)    │
+│         -> Phase A row cleanup                              │
+│         -> Phase B df-feature-column N parallel             │
+│              (returns transformer SPECS, not mutated CSVs)  │
+│         -> Phase C cross-column transforms                  │
+│         -> build_pipeline.py:                               │
+│              fit pipeline_tree.pkl                          │
+│              fit pipeline_linear.pkl    (sentinel)          │
+│         -> validate_features.py on pipeline.transform()     │
+│              corr > 0.95 -> HARD STOP                       │
+│         -> df-train-model N parallel (each loads its        │
+│              family's pipeline pickle, transforms inside)   │
+│         -> df-evaluate -> leaderboard.json                  │
+│         -> df-interpret + df-visualize (parallel)           │
+│         -> dataforge-deploy (joblib.load + .transform)      │
+│         -> dataforge-report                                 │
+└─────────────────────────────┬───────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  PERSISTENCE                                                │
+│  <project>/memory/        experiments, decisions, ...       │
+│  <project>/knowledge/     per-project KB snapshot            │
+│  <project>/artifacts/     pipeline pickles                  │
+│  ~/.claude/dataforge/     global KB + config                │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Expert Checkpoints
+---
 
-| Checkpoint | After Stage | What's Reviewed |
-|-----------|-------------|-----------------|
-| 1 | Preprocessing | Imputation, encoding, feature drops, leakage, domain features |
-| 2 | EDA | Distributions, correlations, outliers, imbalance, domain patterns |
-| 3 | Modeling | Train-test gap, metric selection, SHAP sanity, calibration |
+## Subsystems
 
-### Lead Verdict
+### 1. Router and project-type detection
 
-The lead expert returns one of three verdicts:
+- **`skills/dataforge/SKILL.md`** parses `/dataforge <verb>` and dispatches.
+- **`scripts/project_type_detect.py`** sniffs the input path and returns
+  `{track, subtype, confidence, ambiguous, counts, reason}`.
+  - Single file: extension drives the decision (CSV → tabular, image → dl, PDF → rag, ...).
+  - Directory: walks up to 4 levels deep / 2000 files, classifies by file family.
+  - Strong single-family signals (≥60% by count) yield high confidence.
+  - Mixed contents return `ambiguous=true` with the largest family chosen, so the router can `AskUserQuestion`.
+- The track skills (`dataforge-tabular`, `dataforge-dl`, `dataforge-rag`) are the entry points after dispatch. In v0.4.0 only `dataforge-tabular` is implemented; the other two are stubs that print the roadmap.
 
-- **approve** — Continue normally
-- **flag** — Continue, advisories logged to `memory/decisions.md`
-- **block** — Pause pipeline, present critical issues to user for review
+### 2. Knowledge base
 
-### Token Optimization
+The KB lives at `~/.claude/dataforge/knowledge/` and is structured by namespace.
 
-1. **Lazy loading**: Domain reference docs loaded only when domain expert triggers
-2. **Tiered depth**: Skip/light/full based on complexity score
-3. **Agent continuity**: Experts spawned once, continued via SendMessage at later stages
-4. **Cross-stage caching**: All findings cached in `expert_cache/` directory
-5. **Cache-friendly prompts**: Static persona + dynamic inputs structure for prompt caching
+```
+knowledge/
+├── meta.json                 # version, TTLs, last_refresh, last_seed_at, areas
+├── sources.json              # whitelist + fetch state
+├── libraries/{tabular,dl,rag,common}/<lib>.live.md
+├── track/{tabular,dl,rag}/{techniques,pitfalls}.live.md
+├── domain/<name>/<file>.live.md
+├── role/<name>/<file>.live.md
+├── shared/cross-cutting.md
+└── index.md
+```
 
-### Domain Auto-Detection
+**Loader precedence** when a skill or agent reads "leakage patterns":
 
-`domain_detect.py` scores each domain using 4 layers:
-- Column name keywords (weight 0.4)
-- Filename patterns (weight 0.2)
-- Value patterns from profile (weight 0.3)
-- Feature type distribution (weight 0.1)
+1. `<project>/knowledge/...live.md` (per-run snapshot)
+2. `~/.claude/dataforge/knowledge/...live.md` (global live)
+3. `references/seed-knowledge/...md` (seed fallback, always present)
 
-Confidence >= 0.5 activates domain expert; otherwise "general" (no domain expert).
+Live entries **extend** seeds; the seed fallback guarantees DataForge works even
+with an empty KB.
+
+**Schemas (in `schema/`):**
+
+- `sources.json` — whitelist of fetch sources with `id`, `url`, `category`,
+  `area`, `track`, `tier`, `ttl_days`, `last_fetched`, `last_hash`, `enabled`.
+- `knowledge-entry.json` — a single knowledge unit produced by researchers:
+  `id`, `title`, `summary`, `body`, `code_example`, `source_url`, `tier`,
+  `category`, `area`, `track`, `kind` (`new_api|deprecation|best_practice|pitfall|technique|benchmark|case_study`),
+  `applies_to_versions`, `deprecation_replaces`, `confidence`.
+
+**Refresh flow:**
+
+1. `dataforge-learn` (skill) computes which areas are stale from `meta.json` and `sources.json` TTLs.
+2. Spawns N invocations of the relevant researcher agent type in **one message**:
+   - `df-researcher-library` (one per stale library)
+   - `df-researcher-domain` (one per enabled domain)
+   - `df-researcher-role` (one per enabled role)
+3. Each invocation writes ONLY to its own namespace (e.g., `libraries/polars.live.md`). Disjoint targets → no locks.
+4. After all return, `scripts/merge_knowledge.py` extracts cross-cutting insights, writes `shared/cross-cutting.md`, updates `meta.json`, rebuilds `index.md`.
+
+**Bootstrap:** `scripts/seed_kb.py` copies `references/seed-knowledge/` into
+the live KB as `*.live.md` files. Idempotent; `--force` re-seeds. Updates
+`meta.json` per area with `seeded_at` and `source: "seed"`.
+
+**Bundled seed knowledge (v0.4.0):**
+
+- 7 domains: real-estate, finance, healthcare, retail, marketing, manufacturing, social
+- 6 active roles: data-scientist, ml-engineer, data-engineer, mlops, statistician, ai-researcher
+- 8 tabular libraries: sklearn, xgboost, lightgbm, catboost, polars, pandas, optuna, shap
+
+Each seed file has YAML frontmatter (`area`, `category`, `track`, `seeded_at`,
+`refresh_command`, `applies_to_versions`) so a researcher can replace it modularly.
+
+### 3. Architect phase
+
+A new phase between project setup and execution. Skill: `dataforge-architect`.
+
+**Flow:**
+
+1. Track + subtype already known from project_type_detect.
+2. `pre-pipeline-refresh.py` hook ensures relevant KB areas are fresh.
+3. `dataforge-architect` spawns the track's reviewer experts **in parallel in one message**. Each expert reads its KB slice + project context.
+4. Each expert returns an `ExpertRecommendation`:
+   `{expert, role, proposed_approach, alternatives, rationale, kb_citations, confidence}`
+5. `df-expert-lead` consolidates into `architecture_plan.json`:
+   `{track, subtype, chosen_approach, alternatives_considered, rationale, expert_recommendations, expert_citations, fallback_plan, confidence_score, complexity_score, kb_freshness}`
+6. **Mode gate** decides how the plan reaches execution:
+   - `ask` (default) — `AskUserQuestion`, user can approve / edit / redirect.
+   - `semi` — auto-proceed when `confidence_score >= 0.8` AND experts agree AND KB is fresh, else fall through to `ask`.
+   - `auto` — always auto-proceed; flagged in the report if `confidence_score < 0.5`.
+
+**Schema:** `schema/architecture-plan.json` is **track-agnostic**. `chosen_approach`
+is a `oneOf` over `tabular_approach`, `dl_approach`, `rag_approach` definitions.
+DL and RAG approach shapes are defined in v0.4.0 (even though execution lands later)
+so the schema does not need to change in v0.5/v0.6.
+
+### 4. Tabular pipeline discipline
+
+The structural fix that addresses the LEARNINGS.md leakage and train/serve skew.
+
+**Execution order (enforced by hooks):**
+
+| Step | What happens | Sentinel | Enforcement |
+|------|-------------|----------|-------------|
+| 1 | ingest | — | — |
+| 2 | raw validate | `.validation_passed` | `pre-train-validate.sh` |
+| 3 | **stratified test holdout** | `.test_split_saved` | `pre-fit-guard.py` blocks any fit before this |
+| 4 | Phase A row cleanup | — | — |
+| 5 | Phase B `df-feature-column` parallel — returns transformer SPECS, not mutated CSVs | — | output contract |
+| 6 | Phase C cross-column transformer specs | — | — |
+| 7 | `build_pipeline.py` fits `pipeline_tree.pkl` and `pipeline_linear.pkl` on **train only** | `.pipeline_fitted` | hook |
+| 8 | `validate_features.py` runs on `pipeline.transform(X_train)` | — | exit 2 = HARD STOP if corr > 0.95 |
+| 9 | `df-train-model` — N models in parallel, each loads its family's pipeline, `.transform()` internally | — | `pre-train-pipeline-gate.sh` blocks training before sentinels |
+| 10 | `df-evaluate`, `df-interpret`, `df-visualize` | — | — |
+| 11 | `dataforge-deploy` — generated app must `joblib.load` + `pipeline.transform()` | — | `pre-deploy-lint.py` blocks app code that re-implements transformers |
+| 12 | `dataforge-report` | — | — |
+
+**Phase B output contract** changes in v0.4.0: `df-feature-column` returns a
+JSON spec describing a sklearn transformer + its column targets, not a mutated
+column CSV. The orchestrator collects specs into two `ColumnTransformer`s
+(`pipeline_tree`, `pipeline_linear`) and fits each.
+
+**Pipeline split:**
+
+- `pipeline_tree` — for HistGradientBoosting, XGBoost, LightGBM, CatBoost, RF: ordinal/native categorical, no scaling, NaN passthrough.
+- `pipeline_linear` — for Ridge, Lasso, Logistic, LinearSVC: median imputation, OneHot, StandardScaler, optional polynomial terms.
+
+**Why this matters:**
+
+- No leakage via imputers / encoders / scalers — all fit on train only.
+- No train/serve skew — the deploy app does not own the transforms; it calls `.transform()` on the same fitted pipeline used for evaluation.
+- Reproducibility — `pipeline_*.pkl` + `test.csv` row hash in `dataforge.config.json` produces identical numbers forever.
+
+### 5. Expert agents
+
+DataForge has **two expert layers**:
+
+**v0.3.0 review experts** (still active) — review a stage's output and either approve, flag, or block:
+
+| Agent | Role | Trigger |
+|-------|------|---------|
+| `df-expert-lead` | Lead — collates findings, applies auto-corrections, returns verdict | every checkpoint |
+| `df-expert-datascientist` | Senior DS methodology | `expert_triage.py` complexity score |
+| `df-expert-statistician` | Senior statistician | complexity score |
+| `df-expert-{healthcare,finance,marketing,retail,social,manufacturing}` | 6 domain experts | `domain_detect.py` confidence ≥ 0.5 |
+
+**v0.4.0 architect experts** — make the call BEFORE execution, in the architect phase:
+
+| Agent | Role | Track |
+|-------|------|-------|
+| `df-expert-mle` | ML Engineer — serving, optimization, inference cost | cross-track |
+| `df-expert-dataeng` | Data Engineer — pipelines, schemas, quality | cross-track |
+| `df-expert-mlops` | MLOps — monitoring, drift, deployment reliability | cross-track |
+| `df-expert-airesearcher` | AI Researcher — SOTA awareness, cross-track inputs | cross-track |
+
+Same agents serve both phases — in the architect phase they propose; at review
+checkpoints they critique. The pairing rule: every expert is paired with a
+researcher invocation that populates its KB slice before it speaks.
+
+**Expert triage** (`scripts/expert_triage.py`) decides depth at each stage:
+
+```
+score < 0.2  -> skip   (no review, 0 token cost)
+score 0.2-0.5 -> light  (lead expert only)
+score > 0.5  -> full   (methodology + domain + lead)
+```
+
+Always full when `--production`, first run, or `--domain` flag set.
+
+### 6. Researcher agents
+
+Three **agent type definitions**, many parallel invocations. Same pattern as
+`df-feature-column` (one type, N invocations per column).
+
+| Agent type | Parameters | Writes to | Spawn count |
+|-----------|------------|-----------|-------------|
+| `df-researcher-library` | `{library, sources, since}` | `libraries/<track>/<lib>.live.md` | one per stale library |
+| `df-researcher-domain` | `{domain, sources, web_search}` | `domain/<name>/<file>.live.md` | one per enabled domain |
+| `df-researcher-role` | `{role, sources, web_search}` | `role/<name>/<file>.live.md` | one per enabled role |
+
+Why not 15+ files? They would duplicate fetch/extract logic. The per-library
+configuration lives in `sources.json`, not in agent files.
+
+**Contract:** JSON-in, JSON-out. Each invocation writes ONLY to its own
+namespace. Output JSON reports `{files_written, new_items, updated_items,
+sources_fetched, sources_failed, next_suggested_refresh}`.
+
+**Parallelism:** the orchestrator skill emits a single assistant message with
+multiple `Agent` tool calls (batch ≤10). Additional waves if the stale set
+exceeds the cap.
+
+### 7. Hooks
+
+Hooks run in the harness, not inside the LLM. They cannot be bypassed by
+prompt injection or "the model decided to skip this step."
+
+| Hook | Type | Trigger | Purpose | New in |
+|------|------|---------|---------|--------|
+| `post-generate-lint.py` | PostToolUse | After Write/Edit of `.py` | pyflakes check on generated code | v0.2 |
+| `pre-train-validate.sh` | PreToolUse (Bash) | Before `train.py` | Block training if raw validation didn't pass | v0.2 |
+| `pre-pipeline-refresh.py` | UserPromptSubmit | `/dataforge run`, `/dataforge analyze` | Auto-refresh stale KB areas before pipeline starts | **v0.4** |
+| `pre-codegen-freshness.py` | PreToolUse (Write/Edit) | Writing `.py` with tracked imports | Warn (or block) if `libraries/<lib>.live.md` is stale | **v0.4** |
+| `pre-fit-guard.py` | PreToolUse (Write) | Generating any `.fit()` call | Block unless `.test_split_saved` exists | **v0.4** |
+| `pre-train-pipeline-gate.sh` | PreToolUse (Bash) | Before `train.py` | Block unless `.pipeline_fitted` + leakage gate passed | **v0.4** |
+| `pre-deploy-lint.py` | PreToolUse (Write) | Generating deploy app | Block app code that re-implements scalers/encoders/imputers | **v0.4** |
+
+### 8. Memory
+
+Per-project, persisted in `memory/`:
+
+| File | Purpose |
+|------|---------|
+| `experiments.json` | Run history (configs, metrics, artifact paths, git SHA) |
+| `decisions.md` | Why each choice was made (human-readable) |
+| `failed_transforms.json` | Transforms/models that failed — skipped on resume |
+| `best_pipelines.json` | Winning configs — seeds future runs |
+| `architecture_plan.json` | What the architect phase decided |
+
+`memory_read.py` and `memory_write.py` use Windows-safe locking (`msvcrt`
+fallback) — the same pattern is reused for `meta.json` updates.
+
+---
+
+## Schemas
+
+| Schema | Purpose | Status |
+|--------|---------|--------|
+| `schema/project-config.json` | Per-project config — `project_type`, `project_subtype`, `architect_mode`, `test_split`, `pipeline_artifacts`, `knowledge_snapshot_*` | v0.3 + extended in v0.4 |
+| `schema/expert-output.json` | `expert_output` (per-expert findings) and `lead_verdict` (consolidated) | v0.3 |
+| `schema/memory-schema.json` | `experiments.json`, `best_pipelines.json` shapes | v0.3 |
+| `schema/sources.json` | KB source whitelist with TTL and fetch state | **v0.4 new** |
+| `schema/knowledge-entry.json` | Researcher output unit | **v0.4 new** |
+| `schema/architecture-plan.json` | Track-agnostic architect phase output | **v0.4 new** |
+
+---
+
+## Forward compatibility (v0.5 / v0.6)
+
+These v0.4.0 decisions are load-bearing for future tracks and must not change:
+
+- `project-config.json` already has `project_type`, `project_subtype`, `architect_mode`.
+- `architecture-plan.json` `chosen_approach` is `oneOf {tabular,dl,rag}_approach` — DL and RAG shapes are already defined.
+- Router dispatches on `project_type`. v0.4 implements only the tabular branch but DL/RAG branches exist and route to stubs.
+- `project_type_detect.py` already returns correct results for image folders, audio folders, and document folders.
+- KB layout has `track/dl/`, `track/rag/`, `libraries/dl/`, `libraries/rag/` directories as empty skeletons.
+- Researcher agents are parameterized — adding DL libraries or RAG roles requires only `sources.json` edits, no new agent files.
+- Expert agent contract (`ExpertRecommendation` shape) is generic — DL and RAG experts will use the same JSON shape.
+- `dataforge-architect` accepts any track passed in; not hardcoded to tabular.
+- Setup wizard asks which tracks the user wants enabled (tabular always yes; DL/RAG default off in v0.4 since stubs).
 
 ---
 
 ## Roadmap
 
-| Version | Deliverable |
-|---------|------------|
-| v0.4.0 | Expert consensus protocol (multiple experts vote, conflicts escalated) |
+| Version | Theme |
+|---------|-------|
+| v0.1.0 | Initial release |
+| v0.2.0 | Modular skill + workflow architecture |
+| v0.3.0 | Expert agent layer |
+| **v0.4.0** | **Continuous learning + foundational fixes + multi-track foundation (current)** |
+| v0.5.0 | Deep Learning track (CV, NLP, time-series, audio, multimodal) |
+| v0.6.0 | RAG track (text, multimodal, doc-KB, agentic) |
+| v0.7.0+ | Cron-based KB refresh, cross-project insight sharing |
