@@ -1,5 +1,13 @@
-# DataForge Router
+# DataForge
 
-Command router for DataForge pipeline. Delegates to 15 specialized skills.
+Autonomous data science pipeline. Transform raw datasets into production-ready models.
 
-See individual skill READMEs in skills/df-*/README.md for details.
+## Quick start
+```bash
+/dataforge run <dataset> <target>
+/df run <dataset> <target>
+```
+
+## 15 Skills
+
+See individual README in each `skills/df-*` folder for details.

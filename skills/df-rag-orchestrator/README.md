@@ -1,5 +1,11 @@
 # RAG Orchestration
 
-Retrieval-augmented generation. Ingestion, chunking, embedding, retrieval, generation.
+Ground LLMs with documents for accurate, cited answers.
 
-**Consolidated:** All 16 RAG skills
+## What you can do
+- Ingest and parse documents
+- Search large document collections efficiently
+- Rank retrieval results by relevance
+- Generate accurate answers with citations
+- Reduce hallucinations and false claims
+- Combine keyword and semantic search

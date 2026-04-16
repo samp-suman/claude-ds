@@ -1,5 +1,11 @@
 # Data Preprocessing
 
-Manage the complete data lifecycle: ingestion, validation, quality gates, layer design, lineage.
+Ingest, validate, clean, and prepare raw data for analysis and modeling.
 
-**Consolidated from:** 10 data engineering skills
+## What you can do
+- Ingest from multiple sources (CSV, JSON, databases)
+- Validate data quality at each stage
+- Handle missing values and outliers
+- Design data layers (raw → interim → processed)
+- Track data transformations (audit trail)
+- Process large datasets efficiently

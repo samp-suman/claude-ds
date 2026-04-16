@@ -1,5 +1,12 @@
 # Model Training & Evaluation
 
-Train, evaluate, rank, interpret. Baseline-first, constraint-based, fairness analysis.
+Train multiple models, evaluate fairly, and understand decisions.
 
-**Consolidated from:** 12 ML system & modeling skills
+## What you can do
+- Train models (always start with baseline)
+- Evaluate with multiple metrics
+- Select best model given constraints (latency, budget, fairness)
+- Tune hyperparameters efficiently
+- Check for bias and fairness issues
+- Explain individual predictions (SHAP/LIME)
+- Analyze model errors and failure modes

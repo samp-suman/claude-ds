@@ -1,5 +1,11 @@
 # Feature Engineering & Selection
 
-Domain features, encoding strategies, selection, feature store design.
+Create powerful features and select the most predictive ones.
 
-**Consolidated from:** 3 feature engineering skills
+## What you can do
+- Engineer domain-specific features (ratios, flags, aggregates)
+- Handle high-cardinality categorical variables
+- Select features by importance (3 different methods)
+- Build and version feature stores
+- Detect feature interactions
+- Document features for reproducibility

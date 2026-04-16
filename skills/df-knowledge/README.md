@@ -1,3 +1,9 @@
 # Knowledge Base
 
-Live knowledge base. Domain expertise, patterns, references. Read-only search.
+Access domain expertise and best practices.
+
+## What you can do
+- Search for patterns and techniques
+- Look up domain expertise
+- Explore available references
+- Inspect knowledge base state
