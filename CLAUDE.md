@@ -83,34 +83,44 @@ DataForge follows a modular **skill + workflow** architecture:
 
 ```
 claude-ds/
-├── skills/                        # 15 skills (SKILL.md + README.md each)
-│   ├── df/                        # Router (parses commands, delegates)
-│   ├── df-preprocess/             # Core: data ingestion + validation
-│   ├── df-eda/                    # Core: exploratory analysis
-│   ├── df-feature-architect/      # Core: feature engineering + selection
-│   ├── df-modeling/               # Core: training + evaluation + interpretation
-│   ├── df-deploy/                 # Core: model serving + optimization
-│   ├── df-experiment/             # Core: tracking + drift detection
-│   ├── df-pipeline/               # Core: orchestration + stage gates
-│   ├── df-analysis/               # Core: workflow (preprocess→EDA→report)
-│   ├── df-llm-orchestrator/       # Infrastructure: LLM systems
-│   ├── df-mlops-pipeline/         # Infrastructure: CI/CD + orchestration
-│   ├── df-distributed-training/   # Infrastructure: multi-GPU training
-│   ├── df-rag-orchestrator/       # Specialized: RAG systems
-│   ├── df-knowledge/              # Core: knowledge base (read-only)
-│   ├── df-learn/                  # Core: knowledge updates
-│   └── df-report/                 # Specialized: reporting
-├── agents/                        # Expert agents (triggered adaptively)
-├── scripts/                       # Python CLI tools (all computation)
-├── references/                    # Reference docs (domain + general)
-├── schema/                        # JSON schemas (config, memory)
-├── docs/                          # Architecture, commands, design docs
-├── .analysis-tmp/                 # Temporary analysis files (not git-tracked)
-├── requirements.txt               # Python dependencies
-├── install.sh                     # Installation script
-├── CHANGELOG.md                   # Version history
-├── CLAUDE.md                      # This file (project instructions)
-└── README.md                      # Installation + usage guide
+├── skills/                           # 16 skill directories (15 skills + 1 alias)
+│   ├── dataforge/                    # Router alias (delegates to df)
+│   ├── df/                           # Primary router (parses /dataforge commands)
+│   │
+│   ├── Core Pipeline (7 skills):
+│   ├── df-preprocess/                # Data ingestion, validation, quality gates
+│   ├── df-eda/                       # Exploratory analysis and profiling
+│   ├── df-feature-architect/         # Feature engineering, selection, store
+│   ├── df-modeling/                  # Model training, evaluation, interpretation
+│   ├── df-deploy/                    # Serving (batch/online/streaming), optimization
+│   ├── df-experiment/                # Tracking, drift detection, monitoring
+│   ├── df-pipeline/                  # Orchestration, stage gates, checkpoints
+│   │
+│   ├── Infrastructure (3 skills):
+│   ├── df-llm-orchestrator/          # LLM selection, caching, evaluation, routing
+│   ├── df-mlops-pipeline/            # CI/CD, orchestration, event-driven
+│   ├── df-distributed-training/      # Multi-GPU training, parallel processing
+│   │
+│   ├── Specialized (2 skills):
+│   ├── df-rag-orchestrator/          # RAG pipeline (chunking, retrieval, generation)
+│   ├── df-report/                    # Report generation (HTML/PDF)
+│   │
+│   └── Utilities (2 skills):
+│       ├── df-analysis/              # Workflow: preprocess → EDA → report
+│       ├── df-knowledge/             # Knowledge base (read-only)
+│       └── df-learn/                 # Knowledge extraction & updates
+│
+├── agents/                           # Expert agents (triggered adaptively)
+├── scripts/                          # Python CLI tools (all computation)
+├── references/                       # Reference docs (domain + general)
+├── schema/                           # JSON schemas (config, memory)
+├── docs/                             # Architecture, commands, design docs
+├── .analysis-tmp/                    # Temporary analysis files (not git-tracked)
+├── requirements.txt                  # Python dependencies
+├── install.sh                        # Installation script
+├── CHANGELOG.md                      # Version history
+├── CLAUDE.md                         # Project instructions (this file)
+└── README.md                         # Installation + usage guide
 ```
 
 ## Conventions
