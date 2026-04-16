@@ -101,6 +101,11 @@ def get_model(model_name: str, problem_type: str, hyperparams: dict):
                 class_weight="balanced",
                 random_state=42,
             ),
+            "balanced_bagging": lambda: __import__("imblearn.ensemble", fromlist=["BalancedBaggingClassifier"]).BalancedBaggingClassifier(
+                n_estimators=hp.get("n_estimators", 100),
+                random_state=42,
+                n_jobs=-1,
+            ),
         }
     elif problem_type == "regression":
         registry = {

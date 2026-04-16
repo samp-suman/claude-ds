@@ -293,13 +293,16 @@ def run_triage(stage, inputs, force_full=False):
         trigger = True
         if not reasons:
             reasons = ["forced full review (production/first-run/domain flag)"]
-    elif score < 0.2:
+    elif score < 0.05:
+        # Very low complexity: skip expert review
         complexity_level = "skip"
         trigger = False
-    elif score <= 0.5:
+    elif score <= 0.4:
+        # Moderate complexity: light review (lead expert only)
         complexity_level = "light"
         trigger = True
     else:
+        # High complexity: full review (all domain + methodology experts)
         complexity_level = "full"
         trigger = True
 
@@ -315,8 +318,10 @@ def run_triage(stage, inputs, force_full=False):
 def main():
     parser = argparse.ArgumentParser(description="DataForge expert triage")
     parser.add_argument("--stage", required=True,
-                        choices=["preprocessing", "eda", "modeling"],
+                        choices=["preprocessing", "eda", "modeling", "feature_engineering"],
                         help="Pipeline stage to evaluate")
+    parser.add_argument("--new-dataset", action="store_true",
+                        help="Force light expert review (new dataset with no prior history)")
     parser.add_argument("--profile", default=None, help="Path to profile.json")
     parser.add_argument("--validation", default=None,
                         help="Path to validation_report.json")
@@ -349,8 +354,15 @@ def main():
         }
 
         force_full = args.production or args.first_run or args.domain_flag
+        force_light_min = args.new_dataset  # Minimum light review for new datasets
 
         result = run_triage(args.stage, inputs, force_full=force_full)
+
+        # If new_dataset flag set and would skip, upgrade to light
+        if force_light_min and result["complexity_level"] == "skip":
+            result["complexity_level"] = "light"
+            result["trigger_experts"] = True
+            result["reasons"].append("new dataset detected - minimum light expert review")
 
         # Write output
         output_path = Path(args.output)

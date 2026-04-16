@@ -84,14 +84,26 @@ def analyze_numeric_column(series, col_name: str, output_dir: Path) -> dict:
 
     # Recommended handling
     recs = []
+    engineering_suggestions = []
+
     if stats["null_pct"] > 0:
-        recs.append("median_imputation" if stats["null_pct"] < 30 else "consider_dropping")
+        if stats["null_pct"] < 30:
+            recs.append("median_imputation")
+        else:
+            # Instead of "consider_dropping", suggest advanced imputation or engineering
+            recs.append("advanced_imputation_needed")
+            engineering_suggestions.append("indicator_feature")  # Add binary flag for missingness
+            engineering_suggestions.append("knn_imputation")  # Or KNN imputation
+
     if abs(stats["skewness"]) > 1:
         recs.append("log_transform" if stats["min"] > 0 else "yeo_johnson_transform")
+
     if n_outliers > 0:
         recs.append("clip_outliers")
+
     recs.append("standard_scaling")
     stats["recommended_transforms"] = recs
+    stats["engineering_suggestions"] = engineering_suggestions
 
     # Plot: histogram + KDE + boxplot
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
@@ -148,15 +160,25 @@ def analyze_categorical_column(series, col_name: str, output_dir: Path) -> dict:
     }
 
     recs = []
+    engineering_suggestions = []
+
     if stats["null_pct"] > 0:
         recs.append("mode_imputation")
+
     if n_unique <= 10:
         recs.append("one_hot_encoding")
     elif n_unique <= 50:
         recs.append("label_encoding")
+        # For moderate cardinality, suggest ordinal grouping if values are naturally ordered
+        engineering_suggestions.append("ordinal_groups")
     else:
-        recs.append("target_encoding")  # High cardinality
+        # High cardinality: suggest multiple engineering options
+        recs.append("target_encoding")
+        engineering_suggestions.append("frequency_encoding")
+        engineering_suggestions.append("count_list_items")  # If values contain lists
+
     stats["recommended_transforms"] = recs
+    stats["engineering_suggestions"] = engineering_suggestions
 
     # Bar chart of top 20 values
     top_n = vc.head(20)

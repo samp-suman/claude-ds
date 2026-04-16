@@ -161,6 +161,129 @@ def apply_transforms(series, transforms: list, target_series=None, col_name: str
                 result = pd.to_datetime(result, errors="coerce").dt.dayofweek
                 log.append({"transform": transform, "status": "applied"})
 
+            elif transform == "indicator_feature":
+                # Add binary flag for missingness
+                n_missing = result.isna().sum()
+                if n_missing > 0:
+                    new_cols[f"{col_name}_is_missing"] = result.isna().astype(int)
+                    log.append({"transform": transform, "status": "applied",
+                                "n_missing": int(n_missing),
+                                "new_column": f"{col_name}_is_missing"})
+
+            elif transform == "knn_imputation":
+                if pd.api.types.is_numeric_dtype(result):
+                    from sklearn.impute import KNNImputer
+                    imputer = KNNImputer(n_neighbors=5)
+                    valid_idx = result.notna()
+                    n_filled = int(result.isna().sum())
+                    if n_filled > 0:
+                        result = pd.Series(
+                            imputer.fit_transform(result.values.reshape(-1, 1)).flatten(),
+                            index=result.index
+                        )
+                        log.append({"transform": transform, "status": "applied",
+                                    "n_filled": n_filled, "n_neighbors": 5})
+
+            elif transform == "iterative_imputation":
+                if pd.api.types.is_numeric_dtype(result):
+                    from sklearn.experimental import enable_iterative_imputer
+                    from sklearn.impute import IterativeImputer
+                    imputer = IterativeImputer(max_iter=10, random_state=42)
+                    n_filled = int(result.isna().sum())
+                    if n_filled > 0:
+                        result = pd.Series(
+                            imputer.fit_transform(result.values.reshape(-1, 1)).flatten(),
+                            index=result.index
+                        )
+                        log.append({"transform": transform, "status": "applied",
+                                    "n_filled": n_filled})
+
+            elif transform == "frequency_encoding":
+                # Encode by frequency of occurrence
+                freq_map = result.value_counts(normalize=True).to_dict()
+                result = result.map(freq_map)
+                log.append({"transform": transform, "status": "applied",
+                            "n_categories": len(freq_map)})
+
+            elif transform == "binary_encoding":
+                # Binary encoding: convert integer labels to binary representation
+                if result.dtype in ('object', 'category'):
+                    le = LabelEncoder()
+                    valid_idx = result.notna()
+                    result_encoded = le.fit_transform(result[valid_idx].astype(str))
+                    result = result.copy().astype(str)
+                    result[valid_idx] = result_encoded
+                    result = pd.to_numeric(result, errors="coerce")
+                    log.append({"transform": transform, "status": "applied",
+                                "n_categories": len(le.classes_)})
+
+            elif transform == "robust_scaling":
+                if pd.api.types.is_numeric_dtype(result):
+                    valid_idx = result.notna()
+                    from sklearn.preprocessing import RobustScaler
+                    scaler = RobustScaler()
+                    result.loc[valid_idx] = scaler.fit_transform(result[valid_idx].values.reshape(-1, 1)).flatten()
+                    log.append({"transform": transform, "status": "applied"})
+
+            elif transform == "maxabs_scaling":
+                if pd.api.types.is_numeric_dtype(result):
+                    valid_idx = result.notna()
+                    max_abs = result[valid_idx].abs().max()
+                    if max_abs > 0:
+                        result = result / max_abs
+                    log.append({"transform": transform, "status": "applied",
+                                "max_abs": round(float(max_abs), 4)})
+
+            elif transform == "polynomial_features":
+                if pd.api.types.is_numeric_dtype(result):
+                    valid_idx = result.notna()
+                    result_sq = (result ** 2)
+                    new_cols[f"{col_name}_squared"] = result_sq
+                    log.append({"transform": transform, "status": "applied",
+                                "new_column": f"{col_name}_squared"})
+
+            elif transform == "ratio_feature":
+                # Ratio feature: only meaningful if we have a denominator (pass via context)
+                # For now, create reciprocal to avoid division by zero issues
+                if pd.api.types.is_numeric_dtype(result):
+                    valid_idx = result.notna() & (result != 0)
+                    ratio = 1.0 / (result.abs() + 1.0)  # +1 to avoid division by zero
+                    new_cols[f"{col_name}_reciprocal"] = ratio
+                    log.append({"transform": transform, "status": "applied",
+                                "new_column": f"{col_name}_reciprocal"})
+
+            elif transform == "extract_numeric":
+                # Extract numeric values from string
+                if result.dtype == 'object':
+                    import re
+                    numeric_vals = result.str.extract(r'([\d.]+)', expand=False)
+                    result = pd.to_numeric(numeric_vals, errors="coerce")
+                    log.append({"transform": transform, "status": "applied",
+                                "n_extracted": int(result.notna().sum())})
+
+            elif transform == "ordinal_groups":
+                # Group high-cardinality ordinal values (e.g., floor numbers → ground/low/mid/high)
+                if pd.api.types.is_numeric_dtype(result) or result.dtype == 'object':
+                    try:
+                        numeric_result = pd.to_numeric(result, errors="coerce")
+                        if numeric_result.notna().sum() > 0:
+                            result_grouped = pd.cut(numeric_result, bins=4, labels=['group1', 'group2', 'group3', 'group4'])
+                            le = LabelEncoder()
+                            result = le.fit_transform(result_grouped.astype(str))
+                            log.append({"transform": transform, "status": "applied",
+                                        "n_groups": 4})
+                    except Exception:
+                        log.append({"transform": transform, "status": "skipped",
+                                    "reason": "Could not create ordinal groups"})
+
+            elif transform == "count_list_items":
+                # Count items in list-like strings
+                if result.dtype == 'object':
+                    list_count = result.str.split(',').str.len()
+                    new_cols[f"{col_name}_list_count"] = list_count
+                    log.append({"transform": transform, "status": "applied",
+                                "new_column": f"{col_name}_list_count"})
+
         except Exception as e:
             log.append({"transform": transform, "status": "error", "error": str(e)})
 

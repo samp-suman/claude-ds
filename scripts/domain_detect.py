@@ -22,6 +22,17 @@ from pathlib import Path
 
 # Domain keyword dictionaries — column name patterns
 DOMAIN_KEYWORDS = {
+    "real_estate": [
+        "property", "real_estate", "realestate", "price", "bedRoom", "bedroom",
+        "bathroom", "bathrm", "bathrooms", "balcony", "area", "sqft", "square_feet",
+        "facing", "location", "address", "nearby", "floor", "floorNum", "property_type",
+        "agent", "broker", "listing", "sale", "rent", "lease", "tenant", "landlord",
+        "mortgage", "loan", "interest_rate", "possession", "agePossession", "building",
+        "apartment", "flat", "house", "villa", "bungalow", "commercial", "residential",
+        "amenity", "parking", "garden", "pool", "security", "lift", "maintenance",
+        "builder", "developer", "society", "colony", "neighborhood", "locality",
+        "landmark", "metro", "station", "school", "hospital", "market", "restaurant",
+    ],
     "healthcare": [
         "patient", "diagnosis", "icd", "cpt", "hba1c", "bmi", "blood_pressure",
         "vitals", "dosage", "prescription", "admission", "discharge", "readmission",
@@ -80,6 +91,7 @@ DOMAIN_KEYWORDS = {
 
 # Filename patterns
 FILENAME_PATTERNS = {
+    "real_estate": r"(property|realestate|real_estate|housing|apartment|flat|house|price|rental|estate)",
     "healthcare": r"(patient|clinical|medical|hospital|health|diagnosis|pharma|drug)",
     "finance": r"(transaction|credit|loan|fraud|bank|financ|stock|portfolio|risk)",
     "marketing": r"(campaign|market|churn|customer|lead|email|ad_|advertis|crm)",
@@ -120,7 +132,26 @@ def score_value_patterns(profile, domain):
     score = 0.0
     col_profiles = profile.get("column_profiles", {})
 
-    if domain == "healthcare":
+    if domain == "real_estate":
+        for col, info in col_profiles.items():
+            col_lower = col.lower()
+            # Price-like numeric columns suggest real estate
+            if col_lower in ("price", "price_numeric", "price_sqft", "priceperunit") and info.get("dtype", "").startswith(("float", "int")):
+                score += 0.3
+            # Bedroom/bathroom counts
+            if col_lower in ("bedroom", "bedRoom", "bathroom", "bathrm", "bathrooms", "balcony"):
+                score += 0.2
+            # Location/area features
+            if col_lower in ("area", "facing", "location", "address", "nearby", "floorNum", "floor"):
+                score += 0.2
+            # Property type categorical
+            if col_lower in ("property_type", "property_type_name", "type"):
+                sample_values = info.get("sample_values", [])
+                sample_str = " ".join(str(v).lower() for v in sample_values)
+                if any(x in sample_str for x in ("apartment", "flat", "house", "villa")):
+                    score += 0.25
+
+    elif domain == "healthcare":
         for col, info in col_profiles.items():
             sample_values = info.get("sample_values", [])
             sample_str = " ".join(str(v) for v in sample_values)

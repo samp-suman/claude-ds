@@ -5,6 +5,90 @@ Format: [Semantic Versioning](https://semver.org/) — `## [version] YYYY-MM-DD`
 
 ---
 
+## [0.5.0] 2026-04-17 — Expert Agent Architecture + Consolidated Skill Wisdom
+
+### Added
+
+**Core Architecture Redesign**
+- `docs/DATAFORGE_EXPERT_CONSOLIDATION.md` — Strategic consolidation of 72 downloaded skills into 8 expert-designed agents. Includes consolidated agent specs, key design principles, 20+ anti-patterns to prevent, implementation roadmap
+- `docs/AGENT_IMPLEMENTATION_BLUEPRINT.md` — Detailed implementation specs for all 8 agents: input/output contracts, expert decision logic, memory tracking format, integration workflows, testing strategy, 5-week timeline
+- `memory/progress_expert_consolidation.md` — Status and outcomes of skills consolidation; delivered without API costs
+
+**8 Consolidated Agents** (replacing 72-skill complexity)
+1. `df-data-architect` — Own data lifecycle (5 skills: data-pipeline-engineer, data-ingestion, etl-pipeline-design, large-scale-processing, quality-checks)
+2. `df-quality-engineer` — Quality gates at every stage (4 skills: data-quality, data-drift, monitoring-ml, online-offline-consistency)
+3. `df-feature-architect` — Transform raw features into predictive power (4 skills: feature-engineering, importance-analysis, feature-store-design, ml-pipeline)
+4. `df-modeler` — Model selection respecting constraints (4 skills: ml-system-design, model-selection, offline-vs-online-evaluation, experiment-tracking)
+5. `df-model-interpreter` — Explain predictions + fairness (4 skills: model-interpretability-lime, model-interpretability-shap, feature-importance, llm-evaluation)
+6. `df-rag-orchestrator` — Production RAG systems (5 skills: rag-data-ingestion, chunking, embedding-selection, vector-indexing, retrieval-optimization)
+7. `df-deployment-architect` — Production deployment (5 skills: deployment-ml, microservices, high-scale-inference, batch-inference, low-latency-design)
+8. `df-decision-checkpoint` — System coordinator (4 skills: ml-system-design, decision-tracking, feedback-loop-learning, offline-vs-online-evaluation)
+
+### Key Design Principles (from 72 skills analysis)
+
+**1. Constraint-First Modeling**
+- Before training any model: latency, budget, fairness, interpretability drive model selection
+- Model respects constraints, not just optimizes accuracy
+
+**2. Quality Gates at Every Stage**
+- Not just at end; validate after each major transform
+- Hard blocks (stop if failed) vs soft warnings (continue but flag)
+
+**3. Memory-Based Learning**
+- Every run logs decisions and outcomes
+- Next run learns: "Last time target encoding worked best for this feature type"
+
+**4. Baseline-First Iteration**
+- Always start with Ridge (regression) or Logistic (classification)
+- Avoid model-first bias (70% model, 10% data, 10% monitoring is wrong)
+
+**5. Monitoring as First-Class**
+- Design monitoring BEFORE training starts
+- Track: drift, fairness, latency, error rates
+
+**6. Anti-Pattern Prevention**
+- Check for 20+ known pitfalls at each stage
+- Prevent: label quality ignorance, train/test contamination, no fairness checks, etc.
+
+### Consolidated Skills Wisdom
+
+**From Data Pipeline Engineer (5-stage workflow):**
+- Source assessment → Architecture selection → Layer design → Quality implementation → Orchestration & monitoring
+- 10 anti-patterns: avoid full refreshes, couple to schema, monolithic pipelines, skip quality gates, delete raw data, hardcoded dates, lineage-less processing, poor retry logic, undocumented transforms, skip dev tests
+
+**From ML System Design Interview (7-stage framework):**
+- Requirements → Metrics → Data → Features → Model → Serving → Monitoring
+- L6+ staff-level thinking: own problem definition, incorporate org constraints, design data flywheels, build vs buy decisions, handle conflicting objectives
+
+**From Computer Vision Pipeline (5-stage workflow):**
+- Preprocess → Sample intelligently → Batch infer → Post-process → Validate
+- 5 anti-patterns: raw data to model (preprocess first), process everything (sample intelligently), sequential processing (batch), use defaults (tune per data), frame-independent (add context/tracking)
+
+**From RAG Skills (6-skill consolidation):**
+- Semantic chunking > fixed-size chunks; preserve boundaries
+- Hybrid retrieval: BM25 (sparse) + dense + rerank (cross-encoder)
+- Citation accuracy > retrieval speed
+- Metadata filtering improves relevance
+
+**From Deployment Skills (5-skill consolidation):**
+- Serving choice: batch vs online vs streaming (cost-latency tradeoff)
+- Optimization: quantization, caching, batching, GPU selection
+- A/B testing with canary deployment + auto-rollback
+
+### Implementation Status
+
+- [x] Analyzed 72 downloaded skills
+- [x] Extracted patterns, anti-patterns, best practices
+- [x] Consolidated to 8 expert-designed agents
+- [x] Documented decision logic for each agent
+- [x] Created implementation blueprint with contracts
+- [ ] Implement 8 agents (5-week timeline starting Week 1)
+- [ ] Build memory persistence layer
+- [ ] Integrate with existing pipeline
+- [ ] End-to-end testing on titanic, customer churn, etc.
+
+---
+
 ## Roadmap
 
 ### v0.4.0 — Continuous Learning + Foundational Fixes + Multi-Track Foundation (in progress)
