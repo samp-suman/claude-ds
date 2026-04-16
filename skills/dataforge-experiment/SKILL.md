@@ -37,7 +37,7 @@ allowed-tools:
 Read all memory files and present a summary:
 
 ```bash
-python3 ~/.claude/scripts/memory_read.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/memory_read.py \
   --project-dir "{PROJECT_DIR}" \
   --file all
 ```

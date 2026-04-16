@@ -44,7 +44,7 @@ Extract the first positional: `show`, `search`, `status`, or `diff`.
 ## Step 2 - Delegate to the query backend
 
 ```bash
-python3 ~/.claude/scripts/knowledge_query.py {subcommand} {arg} \
+~/.claude/dataforge/dfpython ~/.claude/scripts/knowledge_query.py {subcommand} {arg} \
   --kb-root "{KB_ROOT}"
 ```
 
@@ -59,7 +59,7 @@ python3 ~/.claude/scripts/knowledge_query.py {subcommand} {arg} \
 
 | Scenario | Action |
 |----------|--------|
-| KB root missing | Instruct: `bash install.sh` then `python3 ~/.claude/scripts/seed_kb.py` |
+| KB root missing | Instruct: `bash install.sh` then `~/.claude/dataforge/dfpython ~/.claude/scripts/seed_kb.py` |
 | No matches for `show`/`search` | Print "No matches" and exit 1 |
 | Malformed JSON in a live file | Report the file path and skip it (merge_knowledge.py handles repair) |
 

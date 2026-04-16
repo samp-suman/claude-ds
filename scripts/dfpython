@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# DataForge Python wrapper — uses venv if installed, else system python3
+VENV_DIR="$HOME/.claude/dataforge/claude-ds-env"
+
+if [[ -f "$VENV_DIR/bin/python3" ]]; then
+  exec "$VENV_DIR/bin/python3" "$@"
+elif [[ -f "$VENV_DIR/Scripts/python.exe" ]]; then
+  exec "$VENV_DIR/Scripts/python.exe" "$@"
+else
+  exec python3 "$@"
+fi

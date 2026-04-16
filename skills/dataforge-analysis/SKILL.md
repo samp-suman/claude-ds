@@ -47,16 +47,28 @@ Extract from user's message:
 
 If `DATASET_PATH` is missing: ask the user to provide it.
 
+### Step 0b — Create DS Design Document (PROJECT_PLAN.md)
+
+Create `{OUTPUT_DIR}/PROJECT_PLAN.md` using the template from
+`~/.claude/references/project-plan-template.md`. Fill in known fields
+(`{PROJECT_NAME}`, `{DATASET_PATH}`, `{TARGET_COL}`, `{TIMESTAMP}`).
+Set `{STATUS}` to "In Progress". Mark analysis-only stages (Ingest, Validate,
+Profile, EDA, Report) as "Pending" and modeling stages as "N/A (analysis only)".
+
+Update `PROJECT_PLAN.md` after each stage completes with status, duration, and
+newly discovered data (row count, problem type, etc.). At the end, set
+`{STATUS}` to "Complete".
+
 ### Step 1 — Preprocessing (Ingest + Validate + Profile)
 
 Invoke the `dataforge-preprocess` skill:
 
 **If target provided:**
 Run the full preprocessing pipeline:
-1. Ingest: `python3 ~/.claude/scripts/ingest.py --source "{DATASET_PATH}" --output-dir "{OUTPUT_DIR}"`
+1. Ingest: `~/.claude/dataforge/dfpython ~/.claude/scripts/ingest.py --source "{DATASET_PATH}" --output-dir "{OUTPUT_DIR}"`
 2. Validate: Spawn `df-validate` agent with `dataset_path`, `target_column`, `output_dir`
    - **CRITICAL**: If exit_code 2 (HARD STOP) — report failure and stop
-3. Profile: `python3 ~/.claude/scripts/data_profiler.py --data "{OUTPUT_DIR}/data/raw/{filename}" --output "{OUTPUT_DIR}/data/interim/profile.json" --target "{TARGET_COL}"`
+3. Profile: `~/.claude/dataforge/dfpython ~/.claude/scripts/data_profiler.py --data "{OUTPUT_DIR}/data/raw/{filename}" --output "{OUTPUT_DIR}/data/interim/profile.json" --target "{TARGET_COL}"`
 4. Write `dataforge.config.json`
 
 **If no target:**
@@ -77,12 +89,12 @@ Invoke the `dataforge-eda` skill:
 Run domain detection and expert triage:
 
 ```bash
-python3 ~/.claude/scripts/domain_detect.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/domain_detect.py \
   --data "{OUTPUT_DIR}/data/raw/{filename}" \
   --profile "{OUTPUT_DIR}/data/interim/profile.json" \
   --output "{OUTPUT_DIR}/data/interim/expert_cache/domain.json"
 
-python3 ~/.claude/scripts/expert_triage.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/expert_triage.py \
   --stage eda \
   --profile "{OUTPUT_DIR}/data/interim/profile.json" \
   --eda-summary "{OUTPUT_DIR}/reports/eda/eda_summary.json" \

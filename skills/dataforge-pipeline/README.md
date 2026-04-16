@@ -9,13 +9,18 @@ The main end-to-end workflow. Orchestrates all DataForge skills in sequence to g
 /dataforge run <dataset> <target> [--production]
 ```
 
+## DS Design Document
+
+Every pipeline run creates a `PROJECT_PLAN.md` in the project directory — a living DS Design Document that tracks the approach, stage-by-stage progress, results, and decisions. It's updated after each stage completes.
+
 ## Pipeline steps
 
 ```
-ingest -> validate -> profile -> EDA -> feature engineering -> train -> evaluate
--> interpret -> visualize -> deploy -> report
+plan -> ingest -> validate -> profile -> EDA -> feature engineering -> train
+-> evaluate -> interpret -> visualize -> deploy -> report
 ```
 
+0. **Plan** — Create `PROJECT_PLAN.md` with problem statement and approach
 1. **Ingest** — Load dataset into `data/raw/`
 2. **Validate** — Quality gates (hard stop on critical issues)
 3. **Profile** — Auto-detect problem type, compute statistics

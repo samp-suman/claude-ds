@@ -28,7 +28,7 @@ You run in parallel with df-visualize after the best model is identified.
 2. Run the interpretability script:
 
 ```bash
-python3 ~/.claude/scripts/interpret.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/interpret.py \
   --model-path "{output_dir}/src/models/{best_model}.pkl" \
   --data "{dataset_path}" \
   --target "{target_column}" \

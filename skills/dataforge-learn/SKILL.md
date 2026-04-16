@@ -57,7 +57,7 @@ Extract:
 ## Step 2 - Compute the spawn plan
 
 ```bash
-python3 ~/.claude/scripts/learn_orchestrator.py plan \
+~/.claude/dataforge/dfpython ~/.claude/scripts/learn_orchestrator.py plan \
   --scope {SCOPE} \
   {--area "{AREA}" if AREA} \
   {--force if FORCE} \
@@ -106,7 +106,7 @@ a single area, append a synthetic source `{"id": "user-oneoff", "url": ONE_OFF_S
 Write `all_results` as a JSON array to `{KB_ROOT}/.learn_results.json`, then:
 
 ```bash
-python3 ~/.claude/scripts/merge_knowledge.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/merge_knowledge.py \
   --kb-root "{KB_ROOT}" \
   --results-file "{KB_ROOT}/.learn_results.json"
 ```
@@ -136,7 +136,7 @@ DataForge KB refresh complete
 
 | Scenario | Action |
 |----------|--------|
-| KB root missing | Run `python3 ~/.claude/scripts/seed_kb.py` first, then retry |
+| KB root missing | Run `~/.claude/dataforge/dfpython ~/.claude/scripts/seed_kb.py` first, then retry |
 | No sources.json or empty | Print "no sources configured, run /dataforge-setup" and stop |
 | Researcher returns status=failure | Record in summary, continue with others (never abort the wave) |
 | Merge returns exit_code=1 (unparseable) | Report warnings, do not fail the overall run |

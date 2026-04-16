@@ -56,7 +56,7 @@ Read `{OUTPUT_DIR}/dataforge.config.json` for `problem_type` and `target_column`
 ### Step 2 — Load Memory
 
 ```bash
-python3 ~/.claude/scripts/memory_read.py --project-dir "{OUTPUT_DIR}"
+~/.claude/dataforge/dfpython ~/.claude/scripts/memory_read.py --project-dir "{OUTPUT_DIR}"
 ```
 
 Check:
@@ -115,7 +115,7 @@ If running as part of a workflow, the workflow handles expert checkpoints.
 When running standalone (`/dataforge-modeling train`), run the checkpoint here:
 
 ```bash
-python3 ~/.claude/scripts/expert_triage.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/expert_triage.py \
   --stage modeling \
   --leaderboard "{OUTPUT_DIR}/src/models/leaderboard.json" \
   --profile "{OUTPUT_DIR}/data/interim/profile.json" \
@@ -145,7 +145,7 @@ Write `{OUTPUT_DIR}/src/inference.py` — prediction entry point for best model.
 ### Step 8 — Update Memory
 
 ```bash
-python3 ~/.claude/scripts/memory_write.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/memory_write.py \
   --project-dir "{OUTPUT_DIR}" \
   --file experiments \
   --mode append \

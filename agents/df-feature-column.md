@@ -42,7 +42,7 @@ alongside other instances of yourself, each transforming a different column.
 Run the feature engineering script:
 
 ```bash
-python3 ~/.claude/scripts/features.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/features.py \
   --data "{dataset_path}" \
   --column "{column_name}" \
   --transforms '{transforms_json}' \

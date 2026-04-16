@@ -43,7 +43,7 @@ Read `{PROJECT_DIR}/src/models/leaderboard.json` to find best model.
 ### Step 2 — Detect Deployment Target
 
 ```bash
-python3 ~/.claude/scripts/deploy_detect.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/deploy_detect.py \
   --problem-type "{PROBLEM_TYPE}" \
   --output "{PROJECT_DIR}/data/interim/deploy_config.json"
 ```

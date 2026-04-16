@@ -19,11 +19,19 @@ Makes DataForge available in every project you open with Claude Code.
 ```bash
 git clone https://github.com/samp-suman/claude-ds.git
 cd claude-ds
-pip install -r requirements.txt
-bash install.sh
+bash install.sh --venv        # creates virtual env + installs dependencies
 ```
 
-This copies all skills, agents, scripts, references, and schemas to `~/.claude/` and seeds the knowledge base. Restart Claude Code after installing — the `/dataforge` command becomes available immediately.
+This copies all skills, agents, scripts, references, and schemas to `~/.claude/`, creates a `claude-ds-env` virtual environment with all Python dependencies, and seeds the knowledge base.
+
+> **Important:** After installing, restart Claude Code (or reload the window) for the `/dataforge` command to become available. Skills are only discovered at startup.
+
+If you prefer to manage dependencies yourself (e.g., in your own conda/venv):
+
+```bash
+pip install -r requirements.txt
+bash install.sh               # install without --venv
+```
 
 ### Project-level install
 
@@ -32,19 +40,20 @@ Makes DataForge available only in a specific project. Useful if you don't want i
 ```bash
 git clone https://github.com/samp-suman/claude-ds.git
 cd claude-ds
-pip install -r requirements.txt
 
 # Install into a specific project
-bash install.sh --project /path/to/your/project
+bash install.sh --project /path/to/your/project --venv
 
 # Or cd into your project and run without a path (defaults to current directory)
 cd /path/to/your/project
-bash /path/to/claude-ds/install.sh --project
+bash /path/to/claude-ds/install.sh --project --venv
 ```
 
 This installs everything to `<your-project>/.claude/` instead of `~/.claude/`. The installer automatically adds `.claude/` to the project's `.gitignore` so plugin files aren't committed.
 
 DataForge commands will only work when Claude Code is opened in that project directory.
+
+> **Important:** Restart Claude Code after installing for skills to be discovered.
 
 ### Verify installation
 
@@ -65,6 +74,9 @@ bash install.sh --uninstall
 
 # Project-level
 bash install.sh --uninstall --project /path/to/your/project
+
+# Also remove the virtual env (optional)
+rm -rf ~/.claude/dataforge/claude-ds-env
 ```
 
 Your knowledge base at `~/.claude/dataforge/knowledge/` is preserved across uninstall/reinstall.
@@ -87,11 +99,11 @@ After pulling new changes:
 cd claude-ds
 git pull
 
-# Global
-bash install.sh
+# Global (add --venv to also update venv packages)
+bash install.sh --venv
 
 # Project-level
-bash install.sh --project /path/to/your/project
+bash install.sh --project /path/to/your/project --venv
 ```
 
 ---
@@ -199,6 +211,7 @@ After a full pipeline run, DataForge creates this project:
 
 ```
 my-project/
+├── PROJECT_PLAN.md                 # DS Design Document — approach, tracker, results
 ├── data/
 │   ├── raw/                        # Original dataset
 │   ├── interim/                    # Intermediate artifacts
@@ -222,6 +235,23 @@ my-project/
 ├── dataforge.config.json           # Project configuration
 └── CLAUDE.md                       # Auto-loads context in future sessions
 ```
+
+---
+
+## DS Design Document (PROJECT_PLAN.md)
+
+Every DataForge run creates a `PROJECT_PLAN.md` in the project directory — a living DS Design Document that tracks the entire project lifecycle:
+
+- **Problem statement** — dataset, target, problem type, domain
+- **Data summary** — row/column counts, missing values, class balance
+- **Approach** — preprocessing, feature engineering, and modeling strategies
+- **Execution tracker** — stage-by-stage status with duration and notes (updated live as the pipeline runs)
+- **Results** — best model, leaderboard, top SHAP features
+- **Quality gates** — which checks passed/failed
+- **Artifacts** — paths to all generated files
+- **Decisions log** — why each choice was made
+
+This document is updated after every pipeline stage, so you always have a clear picture of where the project stands and what approach was taken.
 
 ---
 

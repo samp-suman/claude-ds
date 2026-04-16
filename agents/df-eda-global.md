@@ -23,7 +23,7 @@ per-column EDA agents, analyzing dataset-wide patterns.
 Run the EDA script in global mode:
 
 ```bash
-python3 ~/.claude/scripts/eda.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/eda.py \
   --data "{dataset_path}" \
   --mode global \
   --target "{target_column}" \

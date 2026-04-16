@@ -26,7 +26,7 @@ You assemble the final report after all other pipeline stages are complete.
 1. Run the report assembly script:
 
 ```bash
-python3 ~/.claude/scripts/report.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/report.py \
   --output-dir "{output_dir}" \
   --project-name "{project_name}" \
   --problem-type "{problem_type}" \

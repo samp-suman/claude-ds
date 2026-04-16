@@ -16,15 +16,22 @@ Format: [Semantic Versioning](https://semver.org/) — `## [version] YYYY-MM-DD`
 
 ---
 
-## [0.4.0-alpha] in progress — docs: user-friendly README overhaul
-
-### Changed
-- `README.md` — Rewritten for end-users: clear setup, quick start, all commands, supported inputs, quality gates, extending guide. Removed version status/roadmap (kept in CHANGELOG)
-- `skills/dataforge/README.md` — Rewritten with routing table and links to each skill
+## [0.4.0-alpha] in progress — venv support, dfpython wrapper, docs overhaul
 
 ### Added
-- Per-skill README.md files (10 new): dataforge-preprocess, dataforge-eda, dataforge-modeling, dataforge-experiment, dataforge-deploy, dataforge-report, dataforge-pipeline, dataforge-analysis, dataforge-learn, dataforge-knowledge — each with usage examples and descriptions
-- Main README links to each skill README in the "Skills reference" table
+- **DS Design Document (PROJECT_PLAN.md)** — every pipeline and analysis run creates a living project plan tracking problem statement, approach, stage-by-stage execution, results, quality gates, and decisions. Updated after each stage completes
+- `references/project-plan-template.md` — template for PROJECT_PLAN.md generation
+- `--venv` flag for `install.sh` — creates `claude-ds-env` virtual environment at `~/.claude/dataforge/claude-ds-env/` and installs all Python dependencies automatically
+- `scripts/dfpython` wrapper — routes to venv python if installed, falls back to system python3. All skills and agents now use this wrapper instead of bare `python3`
+- Per-skill README.md files (10 new): dataforge-preprocess, dataforge-eda, dataforge-modeling, dataforge-experiment, dataforge-deploy, dataforge-report, dataforge-pipeline, dataforge-analysis, dataforge-learn, dataforge-knowledge
+
+### Changed
+- `skills/dataforge-pipeline/SKILL.md` — added Step 0b (create PROJECT_PLAN.md) with live updates after each stage
+- `skills/dataforge-analysis/SKILL.md` — added Step 0b (create PROJECT_PLAN.md) for analysis workflow
+- All 22 skill/agent files updated: `python3 ~/.claude/scripts/` replaced with `~/.claude/dataforge/dfpython ~/.claude/scripts/`
+- `install.sh` — installs dfpython wrapper to `~/.claude/dataforge/dfpython` on every install; uses it for KB seeding; `--venv` creates isolated virtual env
+- `README.md` — Rewritten for end-users: setup, venv, quick start, project plan docs, quality gates. Prominent restart notice. Removed version status/roadmap (kept in CHANGELOG)
+- `skills/dataforge/README.md` — Rewritten with routing table and links to each skill
 
 ---
 

@@ -75,7 +75,7 @@ claude-ds/
 
 ## Conventions
 
-- Scripts are standalone CLI tools; invoke with `python3 ~/.claude/scripts/<name>.py`
+- Scripts are standalone CLI tools; invoke with `~/.claude/dataforge/dfpython ~/.claude/scripts/<name>.py`
 - Agents communicate via JSON-in, JSON-out contract
 - Parallel execution: column agents batch <= 10; model training is one batch
 - Memory persists in generated project folder (`memory/` directory)

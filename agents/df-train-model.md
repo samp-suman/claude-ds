@@ -35,7 +35,7 @@ for this model + problem_type combination, use those as the base hyperparams
 Run the training script:
 
 ```bash
-python3 ~/.claude/scripts/train.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/train.py \
   --model "{model_name}" \
   --data "{dataset_path}" \
   --target "{target_column}" \

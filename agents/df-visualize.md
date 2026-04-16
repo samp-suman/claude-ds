@@ -25,7 +25,7 @@ You run in parallel with df-interpret after model selection.
 Run the visualization script:
 
 ```bash
-python3 ~/.claude/scripts/visualize.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/visualize.py \
   --output-dir "{output_dir}" \
   --problem "{problem_type}" \
   --model-path "{output_dir}/src/models/{best_model}.pkl" \

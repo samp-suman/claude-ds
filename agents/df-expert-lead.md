@@ -70,7 +70,7 @@ read the stage outputs directly and apply your own judgment.
 
 6. Log decisions to memory:
    ```bash
-   python3 ~/.claude/scripts/memory_write.py \
+   ~/.claude/dataforge/dfpython ~/.claude/scripts/memory_write.py \
      --project-dir "{output_dir}" \
      --file decisions \
      --mode append \

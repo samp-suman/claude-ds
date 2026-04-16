@@ -110,7 +110,7 @@ tools: Read, Write, Bash
 - param1: description
 
 ## Process
-1. Run script: python3 ~/.claude/scripts/{script}.py ...
+1. Run script: ~/.claude/dataforge/dfpython ~/.claude/scripts/{script}.py ...
 2. Verify output files
 3. Return JSON result
 

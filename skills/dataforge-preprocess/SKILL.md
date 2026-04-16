@@ -53,7 +53,7 @@ Extract:
 ### Step 2 — Load Memory (if project exists)
 
 ```bash
-python3 ~/.claude/scripts/memory_read.py --project-dir "{OUTPUT_DIR}"
+~/.claude/dataforge/dfpython ~/.claude/scripts/memory_read.py --project-dir "{OUTPUT_DIR}"
 ```
 
 If memory exists, note `failed_transforms` to avoid repeating.
@@ -103,7 +103,7 @@ If `"exit_code": 1` (warnings): report warnings to user, then continue.
 ### Step 1 — Run Profiler
 
 ```bash
-python3 ~/.claude/scripts/data_profiler.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/data_profiler.py \
   --data "{OUTPUT_DIR}/data/raw/{filename}" \
   --output "{OUTPUT_DIR}/data/interim/profile.json" \
   --target "{TARGET_COL}"
@@ -185,12 +185,12 @@ expert checkpoints. When running standalone (`/dataforge-preprocess features`),
 run the checkpoint here:
 
 ```bash
-python3 ~/.claude/scripts/domain_detect.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/domain_detect.py \
   --data "{OUTPUT_DIR}/data/raw/{filename}" \
   --profile "{OUTPUT_DIR}/data/interim/profile.json" \
   --output "{OUTPUT_DIR}/data/interim/expert_cache/domain.json"
 
-python3 ~/.claude/scripts/expert_triage.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/expert_triage.py \
   --stage preprocessing \
   --profile "{OUTPUT_DIR}/data/interim/profile.json" \
   --validation "{OUTPUT_DIR}/data/interim/validation_report.json" \
@@ -209,7 +209,7 @@ Write `{OUTPUT_DIR}/src/feature_engineering.py` based on applied transforms.
 ### Step 7 — Update Memory
 
 ```bash
-python3 ~/.claude/scripts/memory_write.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/memory_write.py \
   --project-dir "{OUTPUT_DIR}" \
   --file decisions \
   --mode append_md \

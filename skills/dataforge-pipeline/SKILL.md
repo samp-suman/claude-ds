@@ -47,10 +47,30 @@ Extract from user's message:
 
 If `DATASET_PATH` or `TARGET_COL` is missing: ask the user.
 
+### Step 0b — Create DS Design Document (PROJECT_PLAN.md)
+
+Create `{OUTPUT_DIR}/PROJECT_PLAN.md` using the template from
+`~/.claude/references/project-plan-template.md`. Fill in what's known so far:
+- `{PROJECT_NAME}`, `{DATASET_PATH}`, `{TARGET_COL}`, `{TIMESTAMP}`
+- Set `{STATUS}` to "In Progress"
+- Set all stage statuses to "Pending"
+
+**After EVERY subsequent stage completes**, update `PROJECT_PLAN.md`:
+- Mark the stage status as "Done" with duration and any notes
+- Fill in newly available data (row count after ingest, problem type after profile,
+  model results after training, etc.)
+- If a stage fails or triggers a hard stop, mark it as "Failed" with the reason
+
+At pipeline end, set `{STATUS}` to "Complete" and fill in the Results section
+(best model, leaderboard, SHAP features, quality gates, artifacts).
+
+This document serves as the **living project plan** — a DS Design Document that
+tracks the approach, decisions, and outcomes for the entire project.
+
 ### Step 1 — Load Memory (if project exists)
 
 ```bash
-python3 ~/.claude/scripts/memory_read.py --project-dir "{OUTPUT_DIR}"
+~/.claude/dataforge/dfpython ~/.claude/scripts/memory_read.py --project-dir "{OUTPUT_DIR}"
 ```
 
 If memory exists:
@@ -62,7 +82,7 @@ If memory exists:
 
 **Ingest:**
 ```bash
-python3 ~/.claude/scripts/ingest.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/ingest.py \
   --source "{DATASET_PATH}" \
   --output-dir "{OUTPUT_DIR}"
 ```
@@ -82,7 +102,7 @@ output_dir: {OUTPUT_DIR}
 
 **Profile:**
 ```bash
-python3 ~/.claude/scripts/data_profiler.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/data_profiler.py \
   --data "{OUTPUT_DIR}/data/raw/{filename}" \
   --output "{OUTPUT_DIR}/data/interim/profile.json" \
   --target "{TARGET_COL}"
@@ -95,12 +115,12 @@ Auto-detect problem type. Write `dataforge.config.json`.
 Run domain detection and expert triage:
 
 ```bash
-python3 ~/.claude/scripts/domain_detect.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/domain_detect.py \
   --data "{OUTPUT_DIR}/data/raw/{filename}" \
   --profile "{OUTPUT_DIR}/data/interim/profile.json" \
   --output "{OUTPUT_DIR}/data/interim/expert_cache/domain.json"
 
-python3 ~/.claude/scripts/expert_triage.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/expert_triage.py \
   --stage preprocessing \
   --profile "{OUTPUT_DIR}/data/interim/profile.json" \
   --validation "{OUTPUT_DIR}/data/interim/validation_report.json" \
@@ -148,7 +168,7 @@ Merge results into `eda_summary.json`. Write `src/data_pipeline.py`.
 ### Step 3b — Expert Checkpoint: EDA Review
 
 ```bash
-python3 ~/.claude/scripts/expert_triage.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/expert_triage.py \
   --stage eda \
   --profile "{OUTPUT_DIR}/data/interim/profile.json" \
   --eda-summary "{OUTPUT_DIR}/reports/eda/eda_summary.json" \
@@ -200,7 +220,7 @@ Write `src/model_training.py` and `src/evaluation.py`.
 ### Step 6b — Expert Checkpoint: Modeling Review
 
 ```bash
-python3 ~/.claude/scripts/expert_triage.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/expert_triage.py \
   --stage modeling \
   --leaderboard "{OUTPUT_DIR}/src/models/leaderboard.json" \
   --profile "{OUTPUT_DIR}/data/interim/profile.json" \
@@ -229,7 +249,7 @@ Write `src/inference.py`.
 ### Step 8 — Deploy
 
 ```bash
-python3 ~/.claude/scripts/deploy_detect.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/deploy_detect.py \
   --problem-type "{PROBLEM_TYPE}" \
   --output "{OUTPUT_DIR}/data/interim/deploy_config.json"
 ```
@@ -290,7 +310,7 @@ This is a DataForge-managed Data Science project.
 
 Update memory:
 ```bash
-python3 ~/.claude/scripts/memory_write.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/memory_write.py \
   --project-dir "{OUTPUT_DIR}" \
   --file decisions \
   --mode append_md \

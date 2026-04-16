@@ -49,7 +49,7 @@ REFS_DIR    = ~/.claude/references
 
 Check if `{OUTPUT_DIR}/data/raw/` has files. If not:
 ```bash
-python3 ~/.claude/scripts/ingest.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/ingest.py \
   --source "{DATASET_PATH}" \
   --output-dir "{OUTPUT_DIR}"
 ```
@@ -58,7 +58,7 @@ python3 ~/.claude/scripts/ingest.py \
 
 Check if `{OUTPUT_DIR}/data/interim/profile.json` exists. If not:
 ```bash
-python3 ~/.claude/scripts/data_profiler.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/data_profiler.py \
   --data "{OUTPUT_DIR}/data/raw/{filename}" \
   --output "{OUTPUT_DIR}/data/interim/profile.json"
 ```

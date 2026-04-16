@@ -25,7 +25,7 @@ You run after all parallel model training agents have completed.
 2. Run the evaluation script:
 
 ```bash
-python3 ~/.claude/scripts/evaluate.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/evaluate.py \
   --output-dir "{output_dir}" \
   --problem "{problem_type}"
 ```
@@ -37,7 +37,7 @@ python3 ~/.claude/scripts/evaluate.py \
 5. Update memory with best pipeline:
 
 ```bash
-python3 ~/.claude/scripts/memory_write.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/memory_write.py \
   --project-dir "{output_dir}" \
   --file best_pipelines \
   --mode append \
@@ -54,7 +54,7 @@ python3 ~/.claude/scripts/memory_write.py \
 
 For each model with `"status": "failure"` in training results:
 ```bash
-python3 ~/.claude/scripts/memory_write.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/memory_write.py \
   --project-dir "{output_dir}" \
   --file failed_transforms \
   --mode append \

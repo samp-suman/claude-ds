@@ -24,7 +24,7 @@ Your job is to be the safety gate that protects the pipeline from bad data.
 1. Run the validation script:
 
 ```bash
-python3 ~/.claude/scripts/validate.py \
+~/.claude/dataforge/dfpython ~/.claude/scripts/validate.py \
   --data "{dataset_path}" \
   --target "{target_column}" \
   --output-dir "{output_dir}"
