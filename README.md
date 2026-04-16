@@ -37,6 +37,16 @@ bash install.sh --uninstall
 
 Your knowledge base at `~/.claude/dataforge/knowledge/` is preserved across uninstall/reinstall.
 
+### Reset knowledge base
+
+To wipe the knowledge base and start fresh from baseline seeds:
+
+```bash
+bash install.sh --reset-kb
+```
+
+This deletes all live KB entries (including researcher-fetched updates) and re-seeds from the baseline files in `references/seed-knowledge/`. Use this if the KB gets corrupted or you want a clean slate.
+
 ### Updating
 
 After pulling new changes:

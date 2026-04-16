@@ -3,13 +3,31 @@
 # Copies all plugin files from the claude-ds development repo to ~/.claude/
 #
 # Usage:
-#   bash install.sh           # Install
-#   bash install.sh --uninstall   # Remove DataForge from ~/.claude/
+#   bash install.sh              # Install
+#   bash install.sh --uninstall  # Remove DataForge from ~/.claude/
+#   bash install.sh --reset-kb   # Wipe knowledge base and re-seed from baseline
 
 set -e
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
+
+if [[ "$1" == "--reset-kb" ]]; then
+  echo "Resetting DataForge knowledge base..."
+  if [[ -d "$CLAUDE_DIR/dataforge/knowledge" ]]; then
+    rm -rf "$CLAUDE_DIR/dataforge/knowledge"
+    echo "Cleared: $CLAUDE_DIR/dataforge/knowledge/"
+  fi
+  mkdir -p "$CLAUDE_DIR/dataforge/knowledge"
+  if [[ -f "$CLAUDE_DIR/scripts/seed_kb.py" ]]; then
+    python3 "$CLAUDE_DIR/scripts/seed_kb.py" --force || echo "(seed_kb.py failed)"
+    python3 "$CLAUDE_DIR/scripts/seed_sources.py" || echo "(seed_sources.py failed)"
+    echo "Knowledge base re-seeded from baseline."
+  else
+    echo "Scripts not installed. Run 'bash install.sh' first, then 'bash install.sh --reset-kb'."
+  fi
+  exit 0
+fi
 
 if [[ "$1" == "--uninstall" ]]; then
   echo "Uninstalling DataForge..."
