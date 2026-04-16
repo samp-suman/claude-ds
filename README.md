@@ -172,10 +172,10 @@ Everything runs autonomously. Models train in parallel. The output is a complete
 
 | Command | What it does |
 |---------|-------------|
-| `/dataforge-learn all` | Refresh the entire knowledge base |
-| `/dataforge-learn library --area sklearn` | Refresh one specific library |
-| `/dataforge-knowledge status` | Check freshness of each KB area |
-| `/dataforge-knowledge search "target encoding"` | Search the knowledge base |
+| `/df-learn all` | Refresh the entire knowledge base |
+| `/df-learn library --area sklearn` | Refresh one specific library |
+| `/df-knowledge status` | Check freshness of each KB area |
+| `/df-knowledge search "target encoding"` | Search the knowledge base |
 
 ### Flags
 
@@ -279,16 +279,16 @@ Each skill has its own README with detailed usage. Click to learn more:
 | Skill | Purpose | Details |
 |-------|---------|---------|
 | [dataforge](skills/dataforge/) | Command router | Routes `/dataforge` commands to the right skill |
-| [dataforge-pipeline](skills/dataforge-pipeline/) | Full pipeline workflow | End-to-end: dataset to deployed app |
-| [dataforge-analysis](skills/dataforge-analysis/) | Analysis workflow | Understand data without modeling |
-| [dataforge-preprocess](skills/dataforge-preprocess/) | Preprocessing | Ingestion, validation, profiling, feature engineering |
-| [dataforge-eda](skills/dataforge-eda/) | Exploratory Data Analysis | Per-column stats, plots, correlations, domain insights |
-| [dataforge-modeling](skills/dataforge-modeling/) | Model training | Parallel training, evaluation, SHAP, visualization |
-| [dataforge-experiment](skills/dataforge-experiment/) | Experiment tracking | History, comparison, drift monitoring |
-| [dataforge-deploy](skills/dataforge-deploy/) | Deployment | Streamlit/FastAPI app generation |
-| [dataforge-report](skills/dataforge-report/) | Report generation | HTML/PDF reports with embedded plots |
-| [dataforge-learn](skills/dataforge-learn/) | Knowledge refresh | Update KB from library changelogs, domain sources |
-| [dataforge-knowledge](skills/dataforge-knowledge/) | Knowledge queries | Browse and search the knowledge base |
+| [df-pipeline](skills/df-pipeline/) | Full pipeline workflow | End-to-end: dataset to deployed app |
+| [df-analysis](skills/df-analysis/) | Analysis workflow | Understand data without modeling |
+| [df-preprocess](skills/df-preprocess/) | Preprocessing | Ingestion, validation, profiling, feature engineering |
+| [df-eda](skills/df-eda/) | Exploratory Data Analysis | Per-column stats, plots, correlations, domain insights |
+| [df-modeling](skills/df-modeling/) | Model training | Parallel training, evaluation, SHAP, visualization |
+| [df-experiment](skills/df-experiment/) | Experiment tracking | History, comparison, drift monitoring |
+| [df-deploy](skills/df-deploy/) | Deployment | Streamlit/FastAPI app generation |
+| [df-report](skills/df-report/) | Report generation | HTML/PDF reports with embedded plots |
+| [df-learn](skills/df-learn/) | Knowledge refresh | Update KB from library changelogs, domain sources |
+| [df-knowledge](skills/df-knowledge/) | Knowledge queries | Browse and search the knowledge base |
 
 ---
 
@@ -304,9 +304,9 @@ DataForge maintains a continuously-updated knowledge base at `~/.claude/dataforg
 **How it works:** Researcher agents fetch from whitelisted sources (changelogs, docs, thought-leader content), extract knowledge entries, and merge them into the live KB. The pipeline checks KB freshness before each run and refreshes stale areas automatically.
 
 ```bash
-/dataforge-knowledge status          # Check what's fresh/stale
-/dataforge-learn all                 # Refresh everything
-/dataforge-knowledge search "SHAP"   # Search across all areas
+/df-knowledge status          # Check what's fresh/stale
+/df-learn all                 # Refresh everything
+/df-knowledge search "SHAP"   # Search across all areas
 ```
 
 ---
@@ -319,7 +319,7 @@ DataForge maintains a continuously-updated knowledge base at `~/.claude/dataforg
 | New data source | Edit `scripts/ingest.py` `load_data()` + `detect_format()`, then `bash install.sh` |
 | New skill | Create `skills/dataforge-{name}/SKILL.md` + add router entry, then `bash install.sh` |
 | New domain expert | Create `agents/df-expert-{domain}.md` + seed knowledge in `references/seed-knowledge/domain/{domain}/`, then `bash install.sh` |
-| New KB source | Add to `references/seed-knowledge/` or at runtime via `/dataforge-learn --source <url>` |
+| New KB source | Add to `references/seed-knowledge/` or at runtime via `/df-learn --source <url>` |
 
 ---
 

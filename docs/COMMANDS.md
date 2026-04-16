@@ -4,89 +4,89 @@
 
 | Command | Delegates to | Description |
 |---------|-------------|-------------|
-| `/dataforge run <dataset> <target>` | dataforge-pipeline | Full end-to-end pipeline |
-| `/dataforge analyze <dataset> [target]` | dataforge-analysis | Data analysis without modeling |
-| `/dataforge eda <dataset>` | dataforge-eda | EDA only |
-| `/dataforge preprocess <dataset> <target>` | dataforge-preprocess | Preprocessing only |
-| `/dataforge train <dataset> <target>` | dataforge-modeling | Train + evaluate models |
-| `/dataforge deploy <project-dir>` | dataforge-deploy | Generate deployment app |
-| `/dataforge report <project-dir>` | dataforge-report | Generate HTML/PDF report |
-| `/dataforge validate <dataset>` | dataforge-preprocess | Data quality checks only |
-| `/dataforge status <project-dir>` | dataforge-experiment | View experiment history |
-| `/dataforge resume <project-dir>` | dataforge-pipeline | Resume interrupted pipeline |
-| `/dataforge monitor <dir> --new-data <path>` | dataforge-experiment | Drift detection |
-| `/dataforge compare <project-dir>` | dataforge-experiment | Compare experiment runs |
+| `/dataforge run <dataset> <target>` | df-pipeline | Full end-to-end pipeline |
+| `/dataforge analyze <dataset> [target]` | df-analysis | Data analysis without modeling |
+| `/dataforge eda <dataset>` | df-eda | EDA only |
+| `/dataforge preprocess <dataset> <target>` | df-preprocess | Preprocessing only |
+| `/dataforge train <dataset> <target>` | df-modeling | Train + evaluate models |
+| `/dataforge deploy <project-dir>` | df-deploy | Generate deployment app |
+| `/dataforge report <project-dir>` | df-report | Generate HTML/PDF report |
+| `/dataforge validate <dataset>` | df-preprocess | Data quality checks only |
+| `/dataforge status <project-dir>` | df-experiment | View experiment history |
+| `/dataforge resume <project-dir>` | df-pipeline | Resume interrupted pipeline |
+| `/dataforge monitor <dir> --new-data <path>` | df-experiment | Drift detection |
+| `/dataforge compare <project-dir>` | df-experiment | Compare experiment runs |
 
 ---
 
 ## Skill Commands (directly invocable)
 
-### dataforge-preprocess
+### df-preprocess
 
 | Command | Description |
 |---------|-------------|
-| `/dataforge-preprocess ingest <dataset>` | Load data into project data/raw/ |
-| `/dataforge-preprocess validate <dataset> [target]` | Quality gate checks only |
-| `/dataforge-preprocess profile <dataset>` | Profile + auto-detect problem type |
-| `/dataforge-preprocess features <dataset> <target>` | Full: ingest + validate + profile + feature engineering |
+| `/df-preprocess ingest <dataset>` | Load data into project data/raw/ |
+| `/df-preprocess validate <dataset> [target]` | Quality gate checks only |
+| `/df-preprocess profile <dataset>` | Profile + auto-detect problem type |
+| `/df-preprocess features <dataset> <target>` | Full: ingest + validate + profile + feature engineering |
 
-### dataforge-eda
-
-| Command | Description |
-|---------|-------------|
-| `/dataforge-eda <dataset>` | Full EDA: per-column parallel + global analysis |
-| `/dataforge-eda column <dataset> <col>` | Single-column deep dive |
-| `/dataforge-eda global <dataset> [target]` | Correlation heatmap, target distribution, missing matrix |
-| `/dataforge-eda summary <project-dir>` | Print EDA summary from existing results |
-
-### dataforge-modeling
+### df-eda
 
 | Command | Description |
 |---------|-------------|
-| `/dataforge-modeling train <dataset> <target>` | Train all models in parallel, evaluate, rank |
-| `/dataforge-modeling evaluate <project-dir>` | Re-rank existing trained models |
-| `/dataforge-modeling interpret <project-dir>` | SHAP + feature importance for best model |
-| `/dataforge-modeling visualize <project-dir>` | Generate evaluation plots |
+| `/df-eda <dataset>` | Full EDA: per-column parallel + global analysis |
+| `/df-eda column <dataset> <col>` | Single-column deep dive |
+| `/df-eda global <dataset> [target]` | Correlation heatmap, target distribution, missing matrix |
+| `/df-eda summary <project-dir>` | Print EDA summary from existing results |
 
-### dataforge-experiment
-
-| Command | Description |
-|---------|-------------|
-| `/dataforge-experiment status <project-dir>` | Print memory summary |
-| `/dataforge-experiment compare <project-dir>` | Compare experiments across runs |
-| `/dataforge-experiment monitor <dir> --new-data <path>` | Drift detection |
-| `/dataforge-experiment history <project-dir>` | Full experiment timeline |
-
-### dataforge-deploy
+### df-modeling
 
 | Command | Description |
 |---------|-------------|
-| `/dataforge-deploy <project-dir>` | Generate Streamlit app (default) |
-| `/dataforge-deploy <project-dir> --production` | Generate FastAPI app with Docker |
+| `/df-modeling train <dataset> <target>` | Train all models in parallel, evaluate, rank |
+| `/df-modeling evaluate <project-dir>` | Re-rank existing trained models |
+| `/df-modeling interpret <project-dir>` | SHAP + feature importance for best model |
+| `/df-modeling visualize <project-dir>` | Generate evaluation plots |
 
-### dataforge-report
+### df-experiment
 
 | Command | Description |
 |---------|-------------|
-| `/dataforge-report <project-dir>` | Full report (EDA + models + SHAP) |
-| `/dataforge-report eda <project-dir>` | EDA-only report |
+| `/df-experiment status <project-dir>` | Print memory summary |
+| `/df-experiment compare <project-dir>` | Compare experiments across runs |
+| `/df-experiment monitor <dir> --new-data <path>` | Drift detection |
+| `/df-experiment history <project-dir>` | Full experiment timeline |
+
+### df-deploy
+
+| Command | Description |
+|---------|-------------|
+| `/df-deploy <project-dir>` | Generate Streamlit app (default) |
+| `/df-deploy <project-dir> --production` | Generate FastAPI app with Docker |
+
+### df-report
+
+| Command | Description |
+|---------|-------------|
+| `/df-report <project-dir>` | Full report (EDA + models + SHAP) |
+| `/df-report eda <project-dir>` | EDA-only report |
 
 ---
 
 ## Workflow Commands (directly invocable)
 
-### dataforge-analysis
+### df-analysis
 
 ```
-/dataforge-analysis <dataset> [target]
+/df-analysis <dataset> [target]
 ```
 
 Steps: ingest -> validate -> profile -> EDA (parallel) -> feature engineering -> report
 
-### dataforge-pipeline
+### df-pipeline
 
 ```
-/dataforge-pipeline <dataset> <target> [--production]
+/df-pipeline <dataset> <target> [--production]
 ```
 
 Steps: memory load -> ingest -> validate -> profile -> EDA -> features -> train (parallel) -> evaluate -> interpret + visualize -> deploy -> report -> CLAUDE.md
@@ -123,7 +123,7 @@ Steps: memory load -> ingest -> validate -> profile -> EDA -> features -> train 
 /dataforge preprocess data/churn.csv Churn
 
 # Train models on preprocessed data
-/dataforge-modeling train data/processed/train.csv Survived
+/df-modeling train data/processed/train.csv Survived
 
 # Check experiment history
 /dataforge status titanic/
@@ -138,7 +138,7 @@ Steps: memory load -> ingest -> validate -> profile -> EDA -> features -> train 
 /dataforge validate data/newdata.csv
 
 # Single-column deep dive
-/dataforge-eda column data/titanic.csv Age
+/df-eda column data/titanic.csv Age
 
 # Regenerate report
 /dataforge report titanic/
@@ -173,15 +173,15 @@ full CLI interface documentation.
 
 | Agent | Purpose | Spawned by |
 |-------|---------|-----------|
-| `df-ingest` | Data ingestion | dataforge-preprocess |
-| `df-validate` | Quality gate (exit codes) | dataforge-preprocess, dataforge-pipeline |
-| `df-eda-column` | Per-column EDA (parallel) | dataforge-eda |
-| `df-eda-global` | Global EDA (heatmap, target dist) | dataforge-eda |
-| `df-feature-column` | Per-column feature engineering | dataforge-preprocess |
-| `df-train-model` | Single model training (parallel) | dataforge-modeling |
-| `df-evaluate` | Model ranking + leaderboard | dataforge-modeling |
-| `df-interpret` | SHAP interpretation | dataforge-modeling |
-| `df-visualize` | Evaluation plots | dataforge-modeling |
-| `df-deploy` | Deployment app generation | dataforge-deploy |
-| `df-report` | Report assembly | dataforge-report |
-| `df-monitor` | Drift detection | dataforge-experiment |
+| `df-ingest` | Data ingestion | df-preprocess |
+| `df-validate` | Quality gate (exit codes) | df-preprocess, df-pipeline |
+| `df-eda-column` | Per-column EDA (parallel) | df-eda |
+| `df-eda-global` | Global EDA (heatmap, target dist) | df-eda |
+| `df-feature-column` | Per-column feature engineering | df-preprocess |
+| `df-train-model` | Single model training (parallel) | df-modeling |
+| `df-evaluate` | Model ranking + leaderboard | df-modeling |
+| `df-interpret` | SHAP interpretation | df-modeling |
+| `df-visualize` | Evaluation plots | df-modeling |
+| `df-deploy` | Deployment app generation | df-deploy |
+| `df-report` | Report assembly | df-report |
+| `df-monitor` | Drift detection | df-experiment |

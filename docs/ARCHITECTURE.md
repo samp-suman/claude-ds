@@ -65,7 +65,7 @@ RAG tracks ship as skeletons so v0.5/v0.6 are additions, not rewrites.
 ┌─────────────────────────────────────────────────────────────┐
 │  KNOWLEDGE REFRESH (hook + skill)                           │
 │  pre-pipeline-refresh.py checks meta.json TTLs              │
-│  /dataforge-learn spawns:                                   │
+│  /df-learn spawns:                                   │
 │    df-researcher-library  x N  (parallel)                   │
 │    df-researcher-domain   x N  (parallel)                   │
 │    df-researcher-role     x N  (parallel)                   │
@@ -86,7 +86,7 @@ RAG tracks ship as skeletons so v0.5/v0.6 are additions, not rewrites.
 └─────────────────────────────┬───────────────────────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  TABULAR PIPELINE (dataforge-pipeline)                      │
+│  TABULAR PIPELINE (df-pipeline)                      │
 │                                                             │
 │  ingest -> raw validate -> STRATIFIED HOLDOUT (sentinel)    │
 │         -> Phase A row cleanup                              │
@@ -102,8 +102,8 @@ RAG tracks ship as skeletons so v0.5/v0.6 are additions, not rewrites.
 │              family's pipeline pickle, transforms inside)   │
 │         -> df-evaluate -> leaderboard.json                  │
 │         -> df-interpret + df-visualize (parallel)           │
-│         -> dataforge-deploy (joblib.load + .transform)      │
-│         -> dataforge-report                                 │
+│         -> df-deploy (joblib.load + .transform)      │
+│         -> df-report                                 │
 └─────────────────────────────┬───────────────────────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -166,7 +166,7 @@ with an empty KB.
 
 **Refresh flow:**
 
-1. `dataforge-learn` (skill) computes which areas are stale from `meta.json` and `sources.json` TTLs.
+1. `df-learn` (skill) computes which areas are stale from `meta.json` and `sources.json` TTLs.
 2. Spawns N invocations of the relevant researcher agent type in **one message**:
    - `df-researcher-library` (one per stale library)
    - `df-researcher-domain` (one per enabled domain)
@@ -228,8 +228,8 @@ The structural fix that addresses the LEARNINGS.md leakage and train/serve skew.
 | 8 | `validate_features.py` runs on `pipeline.transform(X_train)` | — | exit 2 = HARD STOP if corr > 0.95 |
 | 9 | `df-train-model` — N models in parallel, each loads its family's pipeline, `.transform()` internally | — | `pre-train-pipeline-gate.sh` blocks training before sentinels |
 | 10 | `df-evaluate`, `df-interpret`, `df-visualize` | — | — |
-| 11 | `dataforge-deploy` — generated app must `joblib.load` + `pipeline.transform()` | — | `pre-deploy-lint.py` blocks app code that re-implements transformers |
-| 12 | `dataforge-report` | — | — |
+| 11 | `df-deploy` — generated app must `joblib.load` + `pipeline.transform()` | — | `pre-deploy-lint.py` blocks app code that re-implements transformers |
+| 12 | `df-report` | — | — |
 
 **Phase B output contract** changes in v0.4.0: `df-feature-column` returns a
 JSON spec describing a sklearn transformer + its column targets, not a mutated
