@@ -40,23 +40,44 @@ DataForge follows a modular **skill + workflow** architecture:
 
 ### Router
 
-`df` skill parses `/dataforge <command>` and delegates to the appropriate skill or workflow.
+**How it works:**
+1. User calls `/dataforge run <dataset> <target>` (or `/df` prefix)
+2. Router skill (`df` or `dataforge` alias) receives command
+3. Router parses command and delegates to appropriate skill:
+   - `run` → `df-pipeline` (orchestrates all 7 stages)
+   - `analyze` → `df-analysis` (workflow: preprocess→eda→report)
+   - `eda` → `df-eda` (exploratory analysis only)
+   - `preprocess` → `df-preprocess` (data prep only)
+   - `train` → `df-modeling` (model training & evaluation)
+   - `deploy` → `df-deploy` (production deployment)
+   - `report` → `df-report` (generate reports)
+   - `status` / `monitor` → `df-experiment` (tracking & drift)
+   - `resume` → `df-pipeline` (resume from checkpoint)
+   - `knowledge` → `df-knowledge` (knowledge base)
+   - `learn` → `df-learn` (knowledge updates)
+
+4. Delegated skill executes and returns JSON results
+5. Results persist in project `memory/` folder
+6. Router returns output to user
 
 ## Quick Commands
 
-| Command | What it does |
-|---------|-------------|
-| `/dataforge run <dataset> <target>` | Full end-to-end pipeline |
-| `/dataforge analyze <dataset>` | Data analysis without modeling |
-| `/dataforge eda <dataset>` | EDA only |
-| `/dataforge preprocess <dataset> <target>` | Preprocessing only |
-| `/dataforge train <dataset> <target>` | Train + evaluate models |
-| `/dataforge deploy <project-dir>` | Generate deployment app |
-| `/dataforge report <project-dir>` | Generate HTML/PDF report |
-| `/dataforge validate <dataset>` | Data quality checks only |
-| `/dataforge status <project-dir>` | View experiment history |
-| `/dataforge resume <project-dir>` | Resume interrupted pipeline |
-| `/dataforge monitor <dir> --new-data <path>` | Drift detection |
+**Both prefixes work:** `/dataforge` and `/df` (interchangeable)
+
+| Command | Execution Path | What it does |
+|---------|---|---|
+| `/dataforge run <dataset> <target>` | df-pipeline | Full end-to-end (preprocess → eda → features → model → deploy → report) |
+| `/dataforge analyze <dataset>` | df-analysis | Data analysis (preprocess → eda → report, no modeling) |
+| `/dataforge preprocess <dataset> <target>` | df-preprocess | Data ingestion, validation, quality gates |
+| `/dataforge eda <dataset>` | df-eda | Exploratory analysis and profiling |
+| `/dataforge train <dataset> <target>` | df-modeling | Train, evaluate, rank models |
+| `/dataforge deploy <project-dir>` | df-deploy | Deploy to production (batch/online/streaming) |
+| `/dataforge report <project-dir>` | df-report | Generate HTML/PDF report |
+| `/dataforge status <project-dir>` | df-experiment | View experiment history and metrics |
+| `/dataforge resume <project-dir>` | df-pipeline | Resume from checkpoint |
+| `/dataforge monitor <dir> --new-data <path>` | df-experiment | Detect drift, trigger retraining |
+| `/dataforge knowledge <query>` | df-knowledge | Search knowledge base |
+| `/dataforge learn [scope]` | df-learn | Extract learnings from projects |
 
 ## Directory Layout
 
