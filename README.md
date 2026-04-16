@@ -12,6 +12,10 @@ Autonomous Data Science plugin for [Claude Code](https://claude.ai/claude-code).
 
 ## Installation
 
+### Global install (recommended)
+
+Makes DataForge available in every project you open with Claude Code.
+
 ```bash
 git clone https://github.com/samp-suman/claude-ds.git
 cd claude-ds
@@ -21,18 +25,46 @@ bash install.sh
 
 This copies all skills, agents, scripts, references, and schemas to `~/.claude/` and seeds the knowledge base. Restart Claude Code after installing — the `/dataforge` command becomes available immediately.
 
+### Project-level install
+
+Makes DataForge available only in a specific project. Useful if you don't want it loaded globally or want to pin a specific version per project.
+
+```bash
+git clone https://github.com/samp-suman/claude-ds.git
+cd claude-ds
+pip install -r requirements.txt
+
+# Install into a specific project
+bash install.sh --project /path/to/your/project
+
+# Or cd into your project and run without a path (defaults to current directory)
+cd /path/to/your/project
+bash /path/to/claude-ds/install.sh --project
+```
+
+This installs everything to `<your-project>/.claude/` instead of `~/.claude/`. The installer automatically adds `.claude/` to the project's `.gitignore` so plugin files aren't committed.
+
+DataForge commands will only work when Claude Code is opened in that project directory.
+
 ### Verify installation
 
 ```bash
+# Global
 ls ~/.claude/skills/ | grep dataforge
 ls ~/.claude/agents/ | grep '^df-'
+
+# Project-level
+ls /path/to/your/project/.claude/skills/ | grep dataforge
 ```
 
 ### Uninstall
 
 ```bash
-cd claude-ds
+# Global
 bash install.sh --uninstall
+
+# Project-level
+bash install.sh --uninstall --project /path/to/your/project
 ```
 
 Your knowledge base at `~/.claude/dataforge/knowledge/` is preserved across uninstall/reinstall.
@@ -54,7 +86,12 @@ After pulling new changes:
 ```bash
 cd claude-ds
 git pull
+
+# Global
 bash install.sh
+
+# Project-level
+bash install.sh --project /path/to/your/project
 ```
 
 ---
