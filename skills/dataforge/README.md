@@ -1,42 +1,27 @@
-# DataForge Router Skill
+# dataforge (Router)
 
-This is the **router skill** -- the main entry point for DataForge. It parses
-`/dataforge <command>` and delegates to the appropriate atomic skill or workflow.
+The main entry point for all DataForge commands. Parses `/dataforge <command>` and delegates to the appropriate skill or workflow.
 
-## How It Works
+## Usage
 
-The router contains:
-- Command table mapping commands to skills/workflows
-- Input parsing logic (extract dataset, target, flags)
-- Architecture overview for reference
+```
+/dataforge <command> [arguments]
+```
 
-The router **never does computation itself** -- it delegates everything.
+You don't need to use this directly — it routes automatically when you type any `/dataforge` command.
 
-## Routing Table
+## How routing works
 
-| Command | Delegates to |
-|---------|-------------|
-| `run` | dataforge-pipeline |
-| `analyze` | dataforge-analysis |
-| `eda` | dataforge-eda |
-| `preprocess` | dataforge-preprocess |
-| `train` | dataforge-modeling |
-| `deploy` | dataforge-deploy |
-| `report` | dataforge-report |
-| `validate` | dataforge-preprocess |
-| `status` | dataforge-experiment |
-| `resume` | dataforge-pipeline |
-| `monitor` | dataforge-experiment |
-| `compare` | dataforge-experiment |
-
-## Related Skills
-
-All skills live as peer directories under `skills/`:
-- `skills/dataforge-preprocess/` -- ingestion, validation, features
-- `skills/dataforge-eda/` -- exploratory data analysis
-- `skills/dataforge-modeling/` -- training, evaluation, SHAP
-- `skills/dataforge-experiment/` -- tracking, comparison
-- `skills/dataforge-deploy/` -- deployment apps
-- `skills/dataforge-report/` -- report generation
-- `skills/dataforge-analysis/` -- analysis workflow
-- `skills/dataforge-pipeline/` -- full pipeline workflow
+| You type | Routes to |
+|----------|-----------|
+| `/dataforge run ...` | [dataforge-pipeline](../dataforge-pipeline/) |
+| `/dataforge analyze ...` | [dataforge-analysis](../dataforge-analysis/) |
+| `/dataforge eda ...` | [dataforge-eda](../dataforge-eda/) |
+| `/dataforge preprocess ...` | [dataforge-preprocess](../dataforge-preprocess/) |
+| `/dataforge train ...` | [dataforge-modeling](../dataforge-modeling/) |
+| `/dataforge validate ...` | [dataforge-preprocess](../dataforge-preprocess/) |
+| `/dataforge deploy ...` | [dataforge-deploy](../dataforge-deploy/) |
+| `/dataforge report ...` | [dataforge-report](../dataforge-report/) |
+| `/dataforge status ...` | [dataforge-experiment](../dataforge-experiment/) |
+| `/dataforge resume ...` | [dataforge-pipeline](../dataforge-pipeline/) |
+| `/dataforge monitor ...` | [dataforge-experiment](../dataforge-experiment/) |

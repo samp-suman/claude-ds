@@ -16,6 +16,18 @@ Format: [Semantic Versioning](https://semver.org/) — `## [version] YYYY-MM-DD`
 
 ---
 
+## [0.4.0-alpha] in progress — docs: user-friendly README overhaul
+
+### Changed
+- `README.md` — Rewritten for end-users: clear setup, quick start, all commands, supported inputs, quality gates, extending guide. Removed version status/roadmap (kept in CHANGELOG)
+- `skills/dataforge/README.md` — Rewritten with routing table and links to each skill
+
+### Added
+- Per-skill README.md files (10 new): dataforge-preprocess, dataforge-eda, dataforge-modeling, dataforge-experiment, dataforge-deploy, dataforge-report, dataforge-pipeline, dataforge-analysis, dataforge-learn, dataforge-knowledge — each with usage examples and descriptions
+- Main README links to each skill README in the "Skills reference" table
+
+---
+
 ## [0.4.0-alpha] in progress — Multi-Track Foundation
 
 ### Added (forward-compat foundation)
