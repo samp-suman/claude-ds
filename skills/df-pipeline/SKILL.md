@@ -36,16 +36,27 @@ allowed-tools:
 This workflow delegates to atomic skills in sequence. Each step uses the
 outputs from previous steps. The workflow handles inter-skill coordination.
 
-### Step 0 — Parse Input
+### Step 0 — Parse Input + Role Detection
 
-Extract from user's message:
+**Parse user input:**
 - `DATASET_PATH`: path to the input data file
 - `TARGET_COL`: target column name (REQUIRED for pipeline)
+- `USER_GOAL`: user's stated goal/intent (e.g., "predict churn for our SaaS product")
 - `PROJECT_NAME`: derive from dataset filename without extension
 - `OUTPUT_DIR`: `{PROJECT_NAME}/` in the current working directory
 - `PRODUCTION_FLAG`: true if user said "production" or "api" or "--production"
 
-If `DATASET_PATH` or `TARGET_COL` is missing: ask the user.
+If `DATASET_PATH` or `TARGET_COL` is missing: ask the user. If `USER_GOAL` unclear, ask for clarification.
+
+**Spawn role detection agent (in parallel with downstream work):**
+```
+Agent(df-expert-role): 
+  user_goal={USER_GOAL}
+  output_dir={OUTPUT_DIR}
+  problem_type=(to be detected)
+```
+This agent infers the user's role (data_analyst | ml_engineer | product_ds | researcher | analytics_engineer)
+and returns role_context.json. This is used at each downstream stage to adjust output style and technique focus.
 
 ### Step 0b — Create DS Design Document (PROJECT_PLAN.md)
 
@@ -110,23 +121,49 @@ output_dir: {OUTPUT_DIR}
 
 Auto-detect problem type. Write `dataforge.config.json`.
 
-### Step 2b — Expert Checkpoint: Preprocessing Review
+### Step 2b — Expert Checkpoint: Domain + Role Context
 
-Run domain detection and expert triage:
+**Claude-native domain and role reasoning (replace script-based detection):**
+
+Read profile.json and raw data sample (first 1000 rows). Claude reasons:
+
+```
+DOMAIN DETECTION (infer from column names, value patterns, data semantics):
+  - Check for domain signals: finance (account, balance, fraud), healthcare (diagnosis, lab, vital),
+    retail (price, inventory, SKU), marketing (customer, purchase, segment), manufacturing (sensor, equipment, maintenance),
+    logistics (demand, lead_time, delivery), social (user, post, engagement)
+  → Confident domain classification with rationale
+  → OR "general" if no strong domain signals
+
+ROLE CONTEXT (from Step 0 role_context.json):
+  - Read role_context.json generated in Step 0
+  → Role: data_analyst | ml_engineer | product_ds | researcher | analytics_engineer
+  → Technique adjustments based on role
+
+OUTPUT: domain_context.json with:
+{
+  "detected_domain": "finance | healthcare | retail | marketing | manufacturing | logistics | social | general",
+  "domain_confidence": "high | medium | low",
+  "domain_reasoning": "<one sentence explaining signals>",
+  "detected_role": "<from role_context.json>",
+  "combined_context": "<how domain + role interact>",
+  "technique_priorities": "<priority adjustments from domain + role>",
+  "expert_agents_to_spawn": ["df-expert-finance", "df-expert-lead", ...]
+}
+```
+
+Write domain_context.json to `{OUTPUT_DIR}/data/interim/expert_cache/domain_context.json`.
+
+**Expert triage (complexity routing):**
 
 ```bash
-~/.claude/dataforge/dfpython ~/.claude/scripts/domain_detect.py \
-  --data "{OUTPUT_DIR}/data/raw/{filename}" \
-  --profile "{OUTPUT_DIR}/data/interim/profile.json" \
-  --output "{OUTPUT_DIR}/data/interim/expert_cache/domain.json"
-
 ~/.claude/dataforge/dfpython ~/.claude/scripts/expert_triage.py \
   --stage preprocessing \
   --profile "{OUTPUT_DIR}/data/interim/profile.json" \
-  --validation "{OUTPUT_DIR}/data/interim/validation_report.json" \
+  --domain-context "{OUTPUT_DIR}/data/interim/expert_cache/domain_context.json" \
   --cache-dir "{OUTPUT_DIR}/data/interim/expert_cache" \
   --output "{OUTPUT_DIR}/data/interim/expert_cache/triage_preprocessing.json" \
-  {--production if PRODUCTION_FLAG} {--first-run if no prior experiments}
+  {--production if PRODUCTION_FLAG}
 ```
 
 Read `triage_preprocessing.json`. Based on `complexity_level`:
@@ -136,12 +173,13 @@ Read `triage_preprocessing.json`. Based on `complexity_level`:
 - **full**: Spawn methodology + domain experts in parallel, then lead:
   ```
   Spawn in parallel:
-  - Agent(df-expert-datascientist): stage=preprocessing output_dir={OUTPUT_DIR} problem_type={PROBLEM_TYPE} domain={DOMAIN}
-  - Agent(df-expert-statistician): stage=preprocessing output_dir={OUTPUT_DIR} problem_type={PROBLEM_TYPE} domain={DOMAIN}
-  - Agent(df-expert-{DOMAIN}): stage=preprocessing output_dir={OUTPUT_DIR} problem_type={PROBLEM_TYPE}
-    (only if DOMAIN != "general")
+  - Agent(df-expert-datascientist): stage=preprocessing output_dir={OUTPUT_DIR}
+  - Agent(df-expert-statistician): stage=preprocessing output_dir={OUTPUT_DIR}
+  - Agent(df-expert-{DOMAIN}): stage=preprocessing output_dir={OUTPUT_DIR}
+    (only if DOMAIN != "general"; e.g., df-expert-finance, df-expert-healthcare, etc.)
+  - Agent(df-expert-role): validate role context if domain conflicts with stated goal
   ```
-  Collect findings. Spawn `df-expert-lead` with all findings.
+  Collect findings. Spawn `df-expert-lead` with all findings + domain_context + role_context.
 
 If lead verdict is **block**: pause pipeline, present blocks to user.
 If lead verdict is **flag** or **approve**: apply auto-corrections, log advisories, continue.
