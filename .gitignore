@@ -56,7 +56,7 @@ desktop.ini
 *.json.bak
 kaggle.json
 
-# Claude Code local settings (machine-specific)
-.claude/settings.local.json
+# Claude Code local state (machine-specific, never track)
+.claude/
 bash.exe.stackdump
 .analysis-tmp/
